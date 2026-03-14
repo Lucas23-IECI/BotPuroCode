@@ -10,8 +10,9 @@ import osmRouter from "./routes/osm";
 const app = express();
 const PORT = process.env.PORT ?? 3001;
 
-const allowedOrigins = process.env.FRONTEND_URL
-  ? [process.env.FRONTEND_URL, "http://localhost:3000"]
+const frontendUrl = process.env.FRONTEND_URL?.replace(/\/+$/, "");
+const allowedOrigins = frontendUrl
+  ? [frontendUrl, "http://localhost:3000"]
   : ["http://localhost:3000"];
 
 app.use(cors({ origin: allowedOrigins }));
