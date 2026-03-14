@@ -1,0 +1,180 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────
+
+enum EstadoPresencia {
+  PENDIENTE
+  SIN_WEB
+  SOLO_RRSS
+  LINK_EXTERNO
+  WEB_BASICA
+  WEB_MEDIA
+  WEB_BUENA
+}
+
+enum NivelOportunidad {
+  NO_EVALUADO
+  ALTA
+  MEDIA_ALTA
+  MEDIA
+  BAJA
+  NO_PRIORITARIO
+}
+
+enum EstadoContacto {
+  NO_CONTACTADO
+  CONTACTADO
+  PROPUESTA_ENVIADA
+  NEGOCIANDO
+  CERRADO_GANADO
+  CERRADO_PERDIDO
+  CERRADO_NO_EXISTE
+}
+
+enum TipoContacto {
+  LLAMADA
+  EMAIL
+  WHATSAPP
+  INSTAGRAM_DM
+  VISITA
+  OTRO
+}
+
+enum ResultadoContacto {
+  INTERESADO
+  NO_INTERESADO
+  NO_CONTESTA
+  SEGUIMIENTO
+  PROPUESTA_ENVIADA
+  CERRADO
+}
+
+// ─── Models ──────────────────────────────────────────────
+
+model Negocio {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Identificación
+  nombre   String
+  rubro    String
+  subrubro String?
+
+  // Ubicación
+  comuna    String
+  ciudad    String?
+  region    String?
+  direccion String?
+  lat       Float?
+  lng       Float?
+
+  // Contacto público del negocio
+  telefono String?
+  email    String?
+  whatsapp String?
+
+  // Presencia digital
+  sitioWeb      String?
+  instagram     String?
+  facebook      String?
+  tiktok        String?
+  linkExterno   String?
+  tipoLinkExt   String? // "agendapro", "linktree", "calendly", etc.
+
+  // Google Maps (ingesta manual)
+  gmapsRating  Float?
+  gmapsReviews Int?
+
+  // Clasificación
+  estadoPresencia  EstadoPresencia  @default(PENDIENTE)
+  score            Int              @default(0)
+  nivelOportunidad NivelOportunidad @default(NO_EVALUADO)
+  razonesScore     String[]         // Array de razones
+
+  // CRM
+  estadoContacto       EstadoContacto @default(NO_CONTACTADO)
+  notas                String?
+  fechaUltimoContacto  DateTime?
+  proximoSeguimiento   DateTime?
+
+  // Meta
+  fuenteDescubrimiento String @default("manual") // "manual", "csv", "osm", "chrome_ext"
+
+  // Relations
+  analisis  Analisis[]
+  contactos Contacto[]
+
+  @@index([rubro])
+  @@index([comuna])
+  @@index([score(sort: Desc)])
+  @@index([estadoContacto])
+  @@index([estadoPresencia])
+}
+
+model Analisis {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  negocioId String
+  negocio   Negocio @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+
+  // Presencia
+  dominioExiste   Boolean?
+  dominioResponde Boolean?
+  httpStatus      Int?
+  redirectUrl     String?
+
+  // Técnico
+  tieneSSL          Boolean?
+  esResponsive      Boolean?
+  tecnologia        String? // "wordpress", "wix", "shopify", etc.
+  plantillaGenerica Boolean?
+
+  // Contenido
+  tieneFormulario      Boolean?
+  tieneCTA             Boolean?
+  tieneWhatsappWidget  Boolean?
+  tieneFavicon         Boolean?
+
+  // SEO
+  tieneTitle       Boolean?
+  titleText        String?
+  tieneMetaDesc    Boolean?
+  metaDescText     String?
+  tieneH1          Boolean?
+  tieneSitemap     Boolean?
+  tieneRobotsTxt   Boolean?
+
+  // Performance (PageSpeed)
+  performanceScore Int?
+  lcpMs            Float?
+  fcpMs            Float?
+  cls              Float?
+
+  // Errores
+  errores String[] // Array de errores detectados
+
+  @@index([negocioId])
+}
+
+model Contacto {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  negocioId String
+  negocio   Negocio @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+
+  tipo      TipoContacto
+  resultado ResultadoContacto?
+  notas     String?
+
+  @@index([negocioId])
+}

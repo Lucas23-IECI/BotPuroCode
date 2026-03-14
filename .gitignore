@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Data & exports
+data/
+exports/
+*.csv
+*.xlsx
+*.json
+!package.json
+!tsconfig.json
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build
+dist/
+build/
+.next/
+out/
+
+# Cache
+.cache/
+.turbo/
+*.tsbuildinfo
+
+# Cerebro - notas internas (no subir datos sensibles)
+Cerebro/datos_sensibles/
+Cerebro/backups/
+
+# Screenshots y capturas temporales
+screenshots/
+temp/
+tmp/
+nul

@@ -1,0 +1,47 @@
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Sidebar, SidebarProvider } from "@/components/sidebar";
+import { ToastProvider } from "@/components/toast";
+import { MainContent } from "@/components/main-content";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "BotPuroCode — Motor de Leads",
+  description: "Sistema de prospección digital para PuroCode",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="es" suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <ThemeProvider>
+          <ToastProvider>
+            <SidebarProvider>
+              <div className="flex min-h-screen">
+                <Sidebar />
+                <MainContent>{children}</MainContent>
+              </div>
+            </SidebarProvider>
+          </ToastProvider>
+        </ThemeProvider>
+      </body>
+    </html>
+  );
+}
