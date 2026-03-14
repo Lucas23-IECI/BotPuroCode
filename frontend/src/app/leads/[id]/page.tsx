@@ -8,6 +8,7 @@ import {
   createContacto,
   updateEstadoContacto,
   deleteNegocio,
+  enriquecerGooglePlaces,
   type Negocio,
   type Analisis,
   type Contacto,
@@ -38,6 +39,8 @@ import {
   Search,
   CalendarDays,
   Map,
+  Sparkles,
+  ShieldCheck,
 } from "lucide-react";
 
 const CRM_STATES = [
@@ -154,6 +157,7 @@ export default function LeadDetailPage() {
   const [contactos, setContactos] = useState<Contacto[]>([]);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
+  const [enriching, setEnriching] = useState(false);
   const [showContactForm, setShowContactForm] = useState(false);
   const [showScoreInfo, setShowScoreInfo] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("resumen");
@@ -190,6 +194,19 @@ export default function LeadDetailPage() {
       setTimeout(fetchData, 3000);
     } finally {
       setAnalyzing(false);
+    }
+  };
+
+  const handleEnrichGoogle = async () => {
+    setEnriching(true);
+    try {
+      await enriquecerGooglePlaces(id);
+      toast("Datos de Google Places actualizados", "success");
+      fetchData();
+    } catch {
+      toast("Error al enriquecer con Google Places (¿API key configurada?)", "error");
+    } finally {
+      setEnriching(false);
     }
   };
 
@@ -288,6 +305,28 @@ export default function LeadDetailPage() {
             {negocio.direccion && ` · ${negocio.direccion}`}
           </p>
 
+          {/* Data quality badge */}
+          {negocio.calidadDatos && (
+            <div className="mt-1.5 flex items-center gap-1.5">
+              <ShieldCheck className={cn("h-4 w-4", {
+                "text-green-400": negocio.calidadDatos === "COMPLETO",
+                "text-yellow-400": negocio.calidadDatos === "PARCIAL",
+                "text-orange-400": negocio.calidadDatos === "MINIMO",
+                "text-red-400": negocio.calidadDatos === "SIN_CONTACTO",
+              })} />
+              <span className={cn("text-xs font-medium rounded-full px-2 py-0.5", {
+                "bg-green-500/20 text-green-400": negocio.calidadDatos === "COMPLETO",
+                "bg-yellow-500/20 text-yellow-400": negocio.calidadDatos === "PARCIAL",
+                "bg-orange-500/20 text-orange-400": negocio.calidadDatos === "MINIMO",
+                "bg-red-500/20 text-red-400": negocio.calidadDatos === "SIN_CONTACTO",
+              })}>
+                {negocio.calidadDatos === "COMPLETO" ? "Datos completos" :
+                 negocio.calidadDatos === "PARCIAL" ? "Datos parciales" :
+                 negocio.calidadDatos === "MINIMO" ? "Datos mínimos" : "Sin contacto"}
+              </span>
+            </div>
+          )}
+
           {/* Social links */}
           <div className="mt-2 flex flex-wrap items-center gap-3">
             {negocio.sitioWeb && (
@@ -323,6 +362,15 @@ export default function LeadDetailPage() {
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
+          <button
+            onClick={handleEnrichGoogle}
+            disabled={enriching}
+            className="flex items-center gap-2 rounded-lg border border-yellow-500/50 px-3 py-2 text-sm font-medium text-yellow-400 hover:bg-yellow-500/10 disabled:opacity-50"
+            title="Enriquecer con Google Places"
+          >
+            <Sparkles className="h-4 w-4" />
+            {enriching ? "Buscando…" : "Google Places"}
+          </button>
           <button
             onClick={handleAnalysis}
             disabled={analyzing}

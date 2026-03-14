@@ -56,7 +56,56 @@ enum ResultadoContacto {
   CERRADO
 }
 
+enum CalidadDatos {
+  COMPLETO
+  PARCIAL
+  MINIMO
+  SIN_CONTACTO
+}
+
+enum EstadoGoogle {
+  ACTIVO
+  CERRADO_PERMANENTE
+  CERRADO_TEMPORAL
+  NO_ENCONTRADO
+  VERIFICAR
+}
+
+enum Rol {
+  ADMIN
+  VENDEDOR
+}
+
+enum TipoPlantilla {
+  WHATSAPP
+  EMAIL
+}
+
+enum TipoNotificacion {
+  SEGUIMIENTO_PENDIENTE
+  LEAD_CALIENTE
+  TAREA_ASIGNADA
+  GENERAL
+}
+
 // ─── Models ──────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  email    String @unique
+  nombre   String
+  password String // bcrypt hash
+  rol      Rol    @default(VENDEDOR)
+  activo   Boolean @default(true)
+
+  negociosAsignados Negocio[]      @relation("AsignadoA")
+  contactosCreados  Contacto[]     @relation("ContactoCreadoPor")
+  propuestas        Propuesta[]
+  notificaciones    Notificacion[]
+}
 
 model Negocio {
   id        String   @id @default(cuid())
@@ -87,17 +136,28 @@ model Negocio {
   facebook      String?
   tiktok        String?
   linkExterno   String?
-  tipoLinkExt   String? // "agendapro", "linktree", "calendly", etc.
+  tipoLinkExt   String?
 
-  // Google Maps (ingesta manual)
-  gmapsRating  Float?
-  gmapsReviews Int?
+  // Google Maps / Places
+  gmapsRating    Float?
+  gmapsReviews   Int?
+  googlePlaceId  String?
+  horarios       String?   // JSON string de horarios
+  estadoGoogle   EstadoGoogle?
+  fotosUrl       String[]
+
+  // RRSS métricas
+  igFollowers  Int?
+  igLastPost   DateTime?
+  fbFollowers  Int?
+  fbLastPost   DateTime?
 
   // Clasificación
   estadoPresencia  EstadoPresencia  @default(PENDIENTE)
   score            Int              @default(0)
   nivelOportunidad NivelOportunidad @default(NO_EVALUADO)
-  razonesScore     String[]         // Array de razones
+  razonesScore     String[]
+  calidadDatos     CalidadDatos     @default(MINIMO)
 
   // CRM
   estadoContacto       EstadoContacto @default(NO_CONTACTADO)
@@ -105,18 +165,25 @@ model Negocio {
   fechaUltimoContacto  DateTime?
   proximoSeguimiento   DateTime?
 
+  // Asignación
+  asignadoAId String?
+  asignadoA   User?   @relation("AsignadoA", fields: [asignadoAId], references: [id])
+
   // Meta
-  fuenteDescubrimiento String @default("manual") // "manual", "csv", "osm", "chrome_ext"
+  fuenteDescubrimiento String @default("manual")
 
   // Relations
-  analisis  Analisis[]
-  contactos Contacto[]
+  analisis   Analisis[]
+  contactos  Contacto[]
+  propuestas Propuesta[]
 
   @@index([rubro])
   @@index([comuna])
   @@index([score(sort: Desc)])
   @@index([estadoContacto])
   @@index([estadoPresencia])
+  @@index([calidadDatos])
+  @@index([asignadoAId])
 }
 
 model Analisis {
@@ -135,7 +202,7 @@ model Analisis {
   // Técnico
   tieneSSL          Boolean?
   esResponsive      Boolean?
-  tecnologia        String? // "wordpress", "wix", "shopify", etc.
+  tecnologia        String?
   plantillaGenerica Boolean?
 
   // Contenido
@@ -160,7 +227,7 @@ model Analisis {
   cls              Float?
 
   // Errores
-  errores String[] // Array de errores detectados
+  errores String[]
 
   @@index([negocioId])
 }
@@ -176,5 +243,60 @@ model Contacto {
   resultado ResultadoContacto?
   notas     String?
 
+  // Quién registró el contacto
+  creadoPorId String?
+  creadoPor   User?   @relation("ContactoCreadoPor", fields: [creadoPorId], references: [id])
+
   @@index([negocioId])
+}
+
+model Plantilla {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  nombre    String
+  tipo      TipoPlantilla
+  asunto    String?          // solo EMAIL
+  cuerpo    String           // con variables {nombre}, {rubro}, {comuna}, etc.
+  categoria String?          // "primer_contacto", "seguimiento", "propuesta", etc.
+  activa    Boolean          @default(true)
+}
+
+model Propuesta {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  negocioId String
+  negocio   Negocio @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+
+  creadoPorId String
+  creadoPor   User   @relation(fields: [creadoPorId], references: [id])
+
+  tipoServicio   String   // "landing", "corporativa", "ecommerce"
+  precioBase     Int      // CLP
+  descuento      Int      @default(0) // porcentaje
+  precioFinal    Int
+  diagnostico    String   // texto del diagnóstico
+  solucion       String   // solución propuesta
+  pdfUrl         String?  // URL del PDF generado
+  estado         String   @default("borrador") // borrador, enviada, aceptada, rechazada
+
+  @@index([negocioId])
+}
+
+model Notificacion {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tipo      TipoNotificacion
+  titulo    String
+  mensaje   String
+  leida     Boolean @default(false)
+  metadata  String? // JSON con data extra (negocioId, etc.)
+
+  @@index([userId, leida])
 }

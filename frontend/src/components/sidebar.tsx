@@ -18,8 +18,13 @@ import {
   Moon,
   Menu,
   X,
+  MapPin,
+  MessageSquareText,
+  Bell,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getNotificaciones } from "@/lib/api";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -27,6 +32,8 @@ const NAV_ITEMS = [
   { href: "/buscar", label: "Buscar OSM", icon: Search },
   { href: "/ingesta", label: "Ingesta", icon: Upload },
   { href: "/pipeline", label: "Pipeline CRM", icon: GitBranch },
+  { href: "/mapa", label: "Mapa", icon: MapPin },
+  { href: "/plantillas", label: "Plantillas", icon: MessageSquareText },
   { href: "/estadisticas", label: "Estadísticas", icon: BarChart3 },
   { href: "/export", label: "Exportar", icon: Download },
 ];
@@ -132,6 +139,28 @@ export function Sidebar() {
 }
 
 function SidebarInner({ collapsed, toggle, pathname }: { collapsed: boolean; toggle: () => void; pathname: string }) {
+  const [noLeidas, setNoLeidas] = useState(0);
+
+  useEffect(() => {
+    getNotificaciones()
+      .then((data) => setNoLeidas(data.noLeidas ?? 0))
+      .catch(() => {});
+    const interval = setInterval(() => {
+      getNotificaciones()
+        .then((data) => setNoLeidas(data.noLeidas ?? 0))
+        .catch(() => {});
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "/login";
+  };
+
+  const isLoggedIn = typeof window !== "undefined" && !!localStorage.getItem("token");
+
   return (
     <div className="flex h-full flex-col">
       {/* Logo */}
@@ -184,9 +213,41 @@ function SidebarInner({ collapsed, toggle, pathname }: { collapsed: boolean; tog
         })}
       </nav>
 
-      {/* Bottom: theme toggle */}
-      <div className="border-t border-border p-2">
+      {/* Bottom: notifications, theme, logout */}
+      <div className="border-t border-border p-2 space-y-1">
+        {/* Notification bell */}
+        <Link
+          href="/leads"
+          title={collapsed ? `Notificaciones (${noLeidas})` : undefined}
+          className={cn(
+            "relative flex items-center rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+            collapsed ? "justify-center" : "gap-3"
+          )}
+        >
+          <div className="relative">
+            <Bell className="h-4 w-4 shrink-0" />
+            {noLeidas > 0 && (
+              <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                {noLeidas > 9 ? "9+" : noLeidas}
+              </span>
+            )}
+          </div>
+          {!collapsed && "Notificaciones"}
+        </Link>
         <ThemeToggle collapsed={collapsed} />
+        {isLoggedIn && (
+          <button
+            onClick={handleLogout}
+            className={cn(
+              "flex w-full items-center rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-400",
+              collapsed ? "justify-center" : "gap-3"
+            )}
+            title={collapsed ? "Cerrar sesión" : undefined}
+          >
+            <LogOut className="h-4 w-4 shrink-0" />
+            {!collapsed && "Cerrar sesión"}
+          </button>
+        )}
       </div>
     </div>
   );

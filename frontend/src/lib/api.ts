@@ -1,10 +1,17 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
 
+function getAuthHeaders(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  const token = localStorage.getItem("botpurocode_token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
+      ...getAuthHeaders(),
       ...init?.headers,
     },
   });
@@ -43,14 +50,24 @@ export interface Negocio {
   tipoLinkExt: string | null;
   gmapsRating: number | null;
   gmapsReviews: number | null;
+  googlePlaceId: string | null;
+  horarios: string | null;
+  estadoGoogle: string | null;
+  fotosUrl: string[];
+  igFollowers: number | null;
+  igLastPost: string | null;
+  fbFollowers: number | null;
+  fbLastPost: string | null;
   estadoPresencia: string;
   score: number;
   nivelOportunidad: string;
   razonesScore: string[];
+  calidadDatos: string;
   estadoContacto: string;
   notas: string | null;
   fechaUltimoContacto: string | null;
   proximoSeguimiento: string | null;
+  asignadoAId: string | null;
   fuenteDescubrimiento: string;
   _count?: { analisis: number; contactos: number };
 }
@@ -265,4 +282,160 @@ export function getReport(id: string) {
 
 export function getExportCSVUrl() {
   return `${API_BASE}/export/csv`;
+}
+
+// ─── Auth ────────────────────────────────────────────────
+
+export interface User {
+  id: string;
+  email: string;
+  nombre: string;
+  rol: string;
+  activo?: boolean;
+  createdAt?: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  user: User;
+}
+
+export function login(email: string, password: string) {
+  return request<LoginResponse>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export function getMe() {
+  return request<User>("/auth/me");
+}
+
+export function getUsers() {
+  return request<User[]>("/auth/users");
+}
+
+export function registerUser(data: { email: string; nombre: string; password: string; rol?: string }) {
+  return request<User>("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateUser(id: string, data: Partial<User>) {
+  return request<User>(`/auth/users/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export function seedAdmin() {
+  return request<{ message: string; user: User }>("/auth/seed", { method: "POST" });
+}
+
+// ─── Plantillas ──────────────────────────────────────────
+
+export interface Plantilla {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  nombre: string;
+  tipo: "WHATSAPP" | "EMAIL";
+  asunto: string | null;
+  cuerpo: string;
+  categoria: string | null;
+  activa: boolean;
+}
+
+export function getPlantillas(params?: { tipo?: string; categoria?: string }) {
+  const qs = new URLSearchParams();
+  if (params?.tipo) qs.set("tipo", params.tipo);
+  if (params?.categoria) qs.set("categoria", params.categoria);
+  return request<Plantilla[]>(`/plantillas?${qs}`);
+}
+
+export function createPlantilla(data: { nombre: string; tipo: string; asunto?: string; cuerpo: string; categoria?: string }) {
+  return request<Plantilla>("/plantillas", { method: "POST", body: JSON.stringify(data) });
+}
+
+export function updatePlantilla(id: string, data: Partial<Plantilla>) {
+  return request<Plantilla>(`/plantillas/${id}`, { method: "PATCH", body: JSON.stringify(data) });
+}
+
+export function deletePlantilla(id: string) {
+  return request(`/plantillas/${id}`, { method: "DELETE" });
+}
+
+export function renderPlantilla(plantillaId: string, negocioId: string) {
+  return request<{ tipo: string; asunto: string; cuerpo: string; whatsappLink: string | null }>("/plantillas/render", {
+    method: "POST",
+    body: JSON.stringify({ plantillaId, negocioId }),
+  });
+}
+
+export function seedPlantillas() {
+  return request<{ message: string }>("/plantillas/seed", { method: "POST" });
+}
+
+// ─── Propuestas ──────────────────────────────────────────
+
+export interface Propuesta {
+  id: string;
+  createdAt: string;
+  negocioId: string;
+  tipoServicio: string;
+  precioBase: number;
+  descuento: number;
+  precioFinal: number;
+  diagnostico: string;
+  solucion: string;
+  pdfUrl: string | null;
+  estado: string;
+  creadoPor?: { nombre: string };
+}
+
+export function createPropuesta(data: { negocioId: string; tipoServicio: string; descuento?: number }) {
+  return request<Propuesta>("/propuestas", { method: "POST", body: JSON.stringify(data) });
+}
+
+export function getPropuestas(negocioId: string) {
+  return request<Propuesta[]>(`/propuestas/negocio/${negocioId}`);
+}
+
+export function updatePropuesta(id: string, estado: string) {
+  return request<Propuesta>(`/propuestas/${id}`, { method: "PATCH", body: JSON.stringify({ estado }) });
+}
+
+export function getPropuestaPDFUrl(id: string) {
+  return `${API_BASE}/propuestas/${id}/pdf`;
+}
+
+// ─── Notificaciones ──────────────────────────────────────
+
+export interface Notificacion {
+  id: string;
+  createdAt: string;
+  tipo: string;
+  titulo: string;
+  mensaje: string;
+  leida: boolean;
+  metadata: string | null;
+}
+
+export function getNotificaciones() {
+  return request<{ notificaciones: Notificacion[]; noLeidas: number }>("/notificaciones");
+}
+
+export function marcarNotificacionLeida(id: string) {
+  return request("/notificaciones/" + id + "/leer", { method: "PATCH" });
+}
+
+export function marcarTodasLeidas() {
+  return request("/notificaciones/leer-todas", { method: "PATCH" });
+}
+
+// ─── Google Places ───────────────────────────────────────
+
+export function enriquecerGooglePlaces(negocioId: string) {
+  return request<{ status: string; reason?: string }>(`/negocios/${negocioId}/enriquecer`, { method: "POST" });
 }

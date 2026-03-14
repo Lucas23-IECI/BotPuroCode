@@ -9,6 +9,7 @@ import {
 import { parseCSV } from "../services/csv.service";
 import { checkPresencia } from "../services/presencia.service";
 import { calcularScore } from "../services/scoring.service";
+import { calcularCalidadDatos } from "../services/calidad-datos.service";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
@@ -282,6 +283,7 @@ async function runPresenciaAndScore(negocioId: string) {
       score: scoring.score,
       nivelOportunidad: scoring.nivelOportunidad,
       razonesScore: scoring.razones,
+      calidadDatos: calcularCalidadDatos(updated),
     },
   });
 }

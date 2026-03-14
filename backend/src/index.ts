@@ -6,6 +6,11 @@ import analisisRouter from "./routes/analisis";
 import crmRouter from "./routes/crm";
 import exportRouter from "./routes/export";
 import osmRouter from "./routes/osm";
+import authRouter from "./routes/auth";
+import plantillasRouter from "./routes/plantillas";
+import propuestasRouter from "./routes/propuestas";
+import notificacionesRouter from "./routes/notificaciones";
+import { iniciarCronJobs } from "./cron/jobs";
 
 const app = express();
 const PORT = process.env.PORT ?? 3001;
@@ -25,6 +30,10 @@ app.use("/api/analisis", analisisRouter);
 app.use("/api/crm", crmRouter);
 app.use("/api/export", exportRouter);
 app.use("/api/osm", osmRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/plantillas", plantillasRouter);
+app.use("/api/propuestas", propuestasRouter);
+app.use("/api/notificaciones", notificacionesRouter);
 
 // ─── Health ──────────────────────────────────────────────
 
@@ -36,4 +45,5 @@ app.get("/api/health", (_req, res) => {
 
 app.listen(PORT, () => {
   console.log(`[BotPuroCode] Backend corriendo en http://localhost:${PORT}`);
+  iniciarCronJobs();
 });
