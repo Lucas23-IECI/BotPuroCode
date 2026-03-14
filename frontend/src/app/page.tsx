@@ -246,6 +246,12 @@ export default function DashboardPage() {
     (stats.byContacto["CERRADO_GANADO"] ?? 0);
 
   const sinWeb = stats.byPresencia["SIN_WEB"] ?? 0;
+  const nuevos7d = stats.nuevos7d ?? 0;
+  const nuevos30d = stats.nuevos30d ?? 0;
+  const tasaConversion = stats.tasaConversion ?? 0;
+  const ganados = stats.ganados ?? 0;
+  const topHot = stats.topHot ?? [];
+  const seguimientosPendientes = stats.seguimientosPendientes ?? 0;
 
   return (
     <div className="space-y-6">
@@ -270,7 +276,7 @@ export default function DashboardPage() {
         <KPICard
           label="Total Negocios"
           value={stats.total}
-          sub={`+${stats.nuevos7d} esta semana`}
+          sub={`+${nuevos7d} esta semana`}
           icon={Users}
           accent="text-blue-500"
           iconBg="bg-blue-500/10"
@@ -304,32 +310,32 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <KPICard
           label="Nuevos (30d)"
-          value={stats.nuevos30d}
+          value={nuevos30d}
           icon={CalendarPlus}
           accent="text-sky-500"
           iconBg="bg-sky-500/10"
         />
         <KPICard
           label="Tasa Conversion"
-          value={`${stats.tasaConversion}%`}
+          value={`${tasaConversion}%`}
           icon={Percent}
-          accent={stats.tasaConversion >= 20 ? "text-emerald-500" : "text-amber-500"}
-          iconBg={stats.tasaConversion >= 20 ? "bg-emerald-500/10" : "bg-amber-500/10"}
+          accent={tasaConversion >= 20 ? "text-emerald-500" : "text-amber-500"}
+          iconBg={tasaConversion >= 20 ? "bg-emerald-500/10" : "bg-amber-500/10"}
         />
         <KPICard
           label="Ganados"
-          value={stats.ganados}
+          value={ganados}
           icon={Trophy}
           accent="text-amber-500"
           iconBg="bg-amber-500/10"
         />
         <KPICard
           label="Seguimientos"
-          value={stats.seguimientosPendientes}
-          sub={stats.seguimientosPendientes > 0 ? "Vencidos" : "Ninguno pendiente"}
+          value={seguimientosPendientes}
+          sub={seguimientosPendientes > 0 ? "Vencidos" : "Ninguno pendiente"}
           icon={Bell}
-          accent={stats.seguimientosPendientes > 0 ? "text-rose-500" : "text-emerald-500"}
-          iconBg={stats.seguimientosPendientes > 0 ? "bg-rose-500/10" : "bg-emerald-500/10"}
+          accent={seguimientosPendientes > 0 ? "text-rose-500" : "text-emerald-500"}
+          iconBg={seguimientosPendientes > 0 ? "bg-rose-500/10" : "bg-emerald-500/10"}
         />
       </div>
 
@@ -404,7 +410,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Top Hot Leads */}
-      {stats.topHot.length > 0 && (
+      {topHot.length > 0 && (
         <div className="rounded-2xl border border-border bg-card p-5">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="flex items-center gap-2 text-sm font-medium text-foreground">
@@ -419,7 +425,7 @@ export default function DashboardPage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
-            {stats.topHot.map((lead) => (
+            {topHot.map((lead) => (
               <Link
                 key={lead.id}
                 href={`/leads/${lead.id}`}
