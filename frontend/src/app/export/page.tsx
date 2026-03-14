@@ -1,17 +1,72 @@
 "use client";
 
-import { useState } from "react";
-import { getReport, getExportCSVUrl } from "@/lib/api";
-import { Download, FileJson, FileSpreadsheet, FileText, Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { getNegocios, getExportCSVUrl, type Negocio } from "@/lib/api";
+import { Download, FileSpreadsheet, FileJson, Eye, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
+const ALL_COLUMNS: { key: keyof Negocio; label: string; default: boolean }[] = [
+  { key: "nombre", label: "Nombre", default: true },
+  { key: "rubro", label: "Rubro", default: true },
+  { key: "comuna", label: "Comuna", default: true },
+  { key: "direccion", label: "Dirección", default: true },
+  { key: "telefono", label: "Teléfono", default: true },
+  { key: "email", label: "Email", default: true },
+  { key: "sitioWeb", label: "Sitio Web", default: true },
+  { key: "instagram", label: "Instagram", default: true },
+  { key: "facebook", label: "Facebook", default: false },
+  { key: "score", label: "Score", default: true },
+  { key: "nivelOportunidad", label: "Nivel", default: true },
+  { key: "estadoPresencia", label: "Presencia", default: true },
+  { key: "estadoContacto", label: "Estado CRM", default: true },
+  { key: "fechaUltimoContacto", label: "Último contacto", default: false },
+  { key: "proximoSeguimiento", label: "Seguimiento", default: false },
+  { key: "notas", label: "Notas", default: false },
+  { key: "createdAt", label: "Fecha creación", default: false },
+];
+
 export default function ExportPage() {
-  const [reportId, setReportId] = useState("");
-  const [report, setReport] = useState<Record<string, unknown> | null>(null);
-  const [loadingReport, setLoadingReport] = useState(false);
+  const [preview, setPreview] = useState<Negocio[]>([]);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [selectedCols, setSelectedCols] = useState<Set<string>>(
+    new Set(ALL_COLUMNS.filter((c) => c.default).map((c) => c.key))
+  );
+
+  /* Filters */
   const [scoreMin, setScoreMin] = useState(0);
   const [nivel, setNivel] = useState("");
+  const [presencia, setPresencia] = useState("");
+  const [estadoCRM, setEstadoCRM] = useState("");
+
+  const toggleCol = (key: string) => {
+    setSelectedCols((prev) => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  };
+
+  const selectAll = () => setSelectedCols(new Set(ALL_COLUMNS.map((c) => c.key)));
+  const selectMinimal = () => setSelectedCols(new Set(["nombre", "rubro", "comuna", "telefono", "score"]));
+
+  const loadPreview = async () => {
+    setLoadingPreview(true);
+    try {
+      const params: Record<string, string | number> = { limit: 10 };
+      if (scoreMin > 0) params.scoreMin = scoreMin;
+      if (nivel) params.nivelOportunidad = nivel;
+      if (presencia) params.estadoPresencia = presencia;
+      if (estadoCRM) params.estadoContacto = estadoCRM;
+      const result = await getNegocios(params);
+      setPreview(result.data);
+      setShowPreview(true);
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
 
   const handleCSVDownload = () => {
     window.open(getExportCSVUrl(), "_blank");
@@ -21,21 +76,30 @@ export default function ExportPage() {
     const params = new URLSearchParams();
     if (scoreMin > 0) params.set("scoreMin", String(scoreMin));
     if (nivel) params.set("nivelOportunidad", nivel);
+    if (presencia) params.set("estadoPresencia", presencia);
+    if (estadoCRM) params.set("estadoContacto", estadoCRM);
     window.open(`${API_BASE}/export/json?${params.toString()}`, "_blank");
   };
 
-  const handleReport = async () => {
-    if (!reportId.trim()) return;
-    setLoadingReport(true);
-    setReport(null);
-    try {
-      const data = await getReport(reportId.trim());
-      setReport(data);
-    } catch {
-      setReport({ error: "No se encontró el negocio" });
-    } finally {
-      setLoadingReport(false);
-    }
+  const handleClientCSVDownload = () => {
+    const cols = ALL_COLUMNS.filter((c) => selectedCols.has(c.key));
+    const header = cols.map((c) => c.label).join(",");
+    const rows = preview.map((n) =>
+      cols.map((c) => {
+        const val = n[c.key];
+        const str = val == null ? "" : Array.isArray(val) ? val.join("; ") : String(val);
+        return str.includes(",") || str.includes('"') || str.includes("\n")
+          ? `"${str.replace(/"/g, '""')}"`
+          : str;
+      }).join(",")
+    );
+    const blob = new Blob(["\uFEFF" + header + "\n" + rows.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `leads_purocode_${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -43,119 +107,150 @@ export default function ExportPage() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">Exportar Datos</h1>
         <p className="text-sm text-muted-foreground">
-          Descarga tus leads en diferentes formatos o genera reportes individuales
+          Descarga tus leads en CSV o JSON, con filtros y selección de columnas
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* CSV Export */}
-        <div className="rounded-xl border border-border bg-card p-6">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="rounded-lg bg-green-500/10 p-2">
-              <FileSpreadsheet className="h-5 w-5 text-green-400" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground">Exportar CSV</h3>
-              <p className="text-sm text-muted-foreground">Todos los leads, compatible con Excel</p>
-            </div>
+      {/* Quick download row */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <button onClick={handleCSVDownload}
+          className="flex items-center gap-3 rounded-xl border border-border bg-card p-5 text-left transition-colors hover:bg-muted/50">
+          <div className="rounded-lg bg-green-500/10 p-2.5"><FileSpreadsheet className="h-5 w-5 text-green-400" /></div>
+          <div className="flex-1">
+            <p className="font-semibold text-foreground">CSV completo</p>
+            <p className="text-xs text-muted-foreground">Todos los leads, compatible con Excel</p>
           </div>
-          <button
-            onClick={handleCSVDownload}
-            className="flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-green-700"
-          >
-            <Download className="h-4 w-4" />
-            Descargar CSV
-          </button>
-        </div>
-
-        {/* JSON Export */}
-        <div className="rounded-xl border border-border bg-card p-6">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="rounded-lg bg-blue-500/10 p-2">
-              <FileJson className="h-5 w-5 text-blue-400" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground">Exportar JSON</h3>
-              <p className="text-sm text-muted-foreground">Filtrado por score y nivel</p>
-            </div>
+          <Download className="h-5 w-5 text-muted-foreground" />
+        </button>
+        <button onClick={handleJSONDownload}
+          className="flex items-center gap-3 rounded-xl border border-border bg-card p-5 text-left transition-colors hover:bg-muted/50">
+          <div className="rounded-lg bg-blue-500/10 p-2.5"><FileJson className="h-5 w-5 text-blue-400" /></div>
+          <div className="flex-1">
+            <p className="font-semibold text-foreground">JSON filtrado</p>
+            <p className="text-xs text-muted-foreground">Con filtros activos</p>
           </div>
-
-          <div className="mb-4 flex flex-wrap gap-3">
-            <div>
-              <label className="mb-1 block text-xs text-muted-foreground">Score mínimo</label>
-              <input
-                type="number"
-                min={0}
-                max={100}
-                value={scoreMin}
-                onChange={(e) => setScoreMin(Number(e.target.value))}
-                className="w-24 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs text-muted-foreground">Nivel</label>
-              <select
-                value={nivel}
-                onChange={(e) => setNivel(e.target.value)}
-                className="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
-              >
-                <option value="">Todos</option>
-                <option value="ALTA">Alta</option>
-                <option value="MEDIA_ALTA">Media Alta</option>
-                <option value="MEDIA">Media</option>
-                <option value="BAJA">Baja</option>
-              </select>
-            </div>
-          </div>
-
-          <button
-            onClick={handleJSONDownload}
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            <Download className="h-4 w-4" />
-            Descargar JSON
-          </button>
-        </div>
+          <Download className="h-5 w-5 text-muted-foreground" />
+        </button>
       </div>
 
-      {/* Mini-report */}
-      <div className="rounded-xl border border-border bg-card p-6">
-        <div className="mb-4 flex items-center gap-3">
-          <div className="rounded-lg bg-purple-500/10 p-2">
-            <FileText className="h-5 w-5 text-purple-400" />
+      {/* Filters */}
+      <div className="rounded-xl border border-border bg-card p-5">
+        <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Filtros de exportación</h3>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">Score mínimo</label>
+            <input type="number" min={0} max={100} value={scoreMin} onChange={(e) => setScoreMin(Number(e.target.value))}
+              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" />
           </div>
           <div>
-            <h3 className="font-semibold text-foreground">Mini-Reporte por Lead</h3>
-            <p className="text-sm text-muted-foreground">
-              Ingresa el ID del negocio para generar un reporte completo
-            </p>
+            <label className="mb-1 block text-xs text-muted-foreground">Nivel</label>
+            <select value={nivel} onChange={(e) => setNivel(e.target.value)}
+              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground">
+              <option value="">Todos</option>
+              <option value="ALTA">Alta</option>
+              <option value="MEDIA_ALTA">Media Alta</option>
+              <option value="MEDIA">Media</option>
+              <option value="BAJA">Baja</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">Presencia</label>
+            <select value={presencia} onChange={(e) => setPresencia(e.target.value)}
+              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground">
+              <option value="">Todas</option>
+              <option value="SIN_WEB">Sin Web</option>
+              <option value="SOLO_RRSS">Solo RRSS</option>
+              <option value="WEB_BASICA">Web Básica</option>
+              <option value="WEB_MEDIA">Web Media</option>
+              <option value="WEB_BUENA">Web Buena</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">Estado CRM</label>
+            <select value={estadoCRM} onChange={(e) => setEstadoCRM(e.target.value)}
+              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground">
+              <option value="">Todos</option>
+              <option value="NO_CONTACTADO">No Contactado</option>
+              <option value="CONTACTADO">Contactado</option>
+              <option value="PROPUESTA_ENVIADA">Propuesta Enviada</option>
+              <option value="NEGOCIANDO">Negociando</option>
+              <option value="CERRADO_GANADO">Ganado</option>
+              <option value="CERRADO_PERDIDO">Perdido</option>
+            </select>
           </div>
         </div>
+      </div>
 
-        <div className="flex gap-3">
-          <input
-            type="text"
-            placeholder="ID del negocio (ej: clxyz123...)"
-            value={reportId}
-            onChange={(e) => setReportId(e.target.value)}
-            className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
-          />
-          <button
-            onClick={handleReport}
-            disabled={loadingReport}
-            className="flex items-center gap-2 rounded-lg bg-purple-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50"
-          >
-            <Search className="h-4 w-4" />
-            {loadingReport ? "Generando…" : "Generar"}
-          </button>
+      {/* Column selector */}
+      <div className="rounded-xl border border-border bg-card p-5">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Columnas a exportar</h3>
+          <div className="flex gap-2">
+            <button onClick={selectAll} className="text-xs text-primary hover:underline">Todas</button>
+            <span className="text-xs text-muted-foreground">·</span>
+            <button onClick={selectMinimal} className="text-xs text-primary hover:underline">Mínimas</button>
+          </div>
         </div>
+        <div className="flex flex-wrap gap-2">
+          {ALL_COLUMNS.map((col) => (
+            <button
+              key={col.key}
+              onClick={() => toggleCol(col.key)}
+              className={cn(
+                "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                selectedCols.has(col.key)
+                  ? "bg-primary/15 text-primary"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              )}
+            >
+              {selectedCols.has(col.key) && <Check className="h-3 w-3" />}
+              {col.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-        {report && (
-          <pre className="mt-4 max-h-96 overflow-auto rounded-lg bg-muted/50 p-4 text-xs text-foreground">
-            {JSON.stringify(report, null, 2)}
-          </pre>
+      {/* Preview */}
+      <div className="flex items-center gap-3">
+        <button onClick={loadPreview} disabled={loadingPreview}
+          className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+          <Eye className="h-4 w-4" /> {loadingPreview ? "Cargando…" : "Previsualizar"}
+        </button>
+        {showPreview && (
+          <span className="text-sm text-muted-foreground">{preview.length} registros (muestra)</span>
         )}
       </div>
+
+      {showPreview && preview.length > 0 && (
+        <div className="space-y-3">
+          <div className="max-h-96 overflow-auto rounded-lg border border-border">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 bg-muted">
+                <tr>
+                  {ALL_COLUMNS.filter((c) => selectedCols.has(c.key)).map((col) => (
+                    <th key={col.key} className="px-3 py-2 text-left text-xs font-medium text-muted-foreground whitespace-nowrap">{col.label}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {preview.map((n) => (
+                  <tr key={n.id} className="border-t border-border hover:bg-muted/30">
+                    {ALL_COLUMNS.filter((c) => selectedCols.has(c.key)).map((col) => {
+                      const val = n[col.key];
+                      const display = val == null ? "—" : Array.isArray(val) ? val.join(", ") : String(val);
+                      return <td key={col.key} className="max-w-48 truncate px-3 py-2 text-foreground">{display}</td>;
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <button onClick={handleClientCSVDownload}
+            className="flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-green-700">
+            <Download className="h-4 w-4" /> Descargar preview como CSV
+          </button>
+        </div>
+      )}
     </div>
   );
 }

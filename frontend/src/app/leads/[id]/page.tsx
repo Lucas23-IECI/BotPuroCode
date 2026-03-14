@@ -36,6 +36,8 @@ import {
   Ban,
   Navigation,
   Search,
+  CalendarDays,
+  Map,
 } from "lucide-react";
 
 const CRM_STATES = [
@@ -160,6 +162,7 @@ export default function LeadDetailPage() {
     resultado: "NEUTRAL" as string,
     notas: "",
   });
+  const [seguimientoDate, setSeguimientoDate] = useState("");
 
   const fetchData = async () => {
     try {
@@ -202,6 +205,14 @@ export default function LeadDetailPage() {
     fetchData();
   };
 
+  const handleSaveSeguimiento = async () => {
+    if (!seguimientoDate) return;
+    await updateEstadoContacto(id, { proximoSeguimiento: seguimientoDate });
+    toast(`Seguimiento agendado para ${new Date(seguimientoDate).toLocaleDateString("es-CL")}`, "success");
+    setSeguimientoDate("");
+    fetchData();
+  };
+
   const handleContactSubmit = async () => {
     await createContacto({
       negocioId: id,
@@ -241,6 +252,15 @@ export default function LeadDetailPage() {
   const mapsCoordLink = negocio.lat && negocio.lng
     ? `https://www.google.com/maps?q=${negocio.lat},${negocio.lng}`
     : null;
+  const tileUrl = (() => {
+    if (!negocio.lat || !negocio.lng) return null;
+    const zoom = 15;
+    const n = Math.pow(2, zoom);
+    const tileX = Math.floor((negocio.lng + 180) / 360 * n);
+    const latRad = negocio.lat * Math.PI / 180;
+    const tileY = Math.floor((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n);
+    return `https://tile.openstreetmap.org/${zoom}/${tileX}/${tileY}.png`;
+  })();
   const presIcon = PRESENCIA_ICONS[negocio.estadoPresencia] ?? PRESENCIA_ICONS.PENDIENTE;
   const isNoExiste = negocio.estadoContacto === "CERRADO_NO_EXISTE";
 
@@ -392,6 +412,7 @@ export default function LeadDetailPage() {
 
       {/* ═══ TAB: Resumen ═══ */}
       {activeTab === "resumen" && (
+        <>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {/* Score card with ring */}
           <div className="rounded-xl border border-border bg-card p-5">
@@ -487,9 +508,63 @@ export default function LeadDetailPage() {
             )}
           </div>
         </div>
-      )}
 
-      {/* Score explainer collapsible */}
+        {/* Extra row: mini map + follow-up scheduler */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {/* Mini Map */}
+          {tileUrl && (
+              <div className="rounded-xl border border-border bg-card p-5">
+                <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                  <Map className="h-4 w-4" /> Ubicación
+                </h3>
+                <a href={mapsCoordLink ?? mapsSearchLink} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-lg">
+                  <img src={tileUrl} alt="Mapa"
+                    className="h-40 w-full object-cover opacity-90 transition-opacity hover:opacity-100" />
+                </a>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  <MapPin className="mr-1 inline h-3 w-3" />
+                  {(negocio.lat ?? 0).toFixed(5)}, {(negocio.lng ?? 0).toFixed(5)}
+                  {negocio.direccion && ` · ${negocio.direccion}`}
+                </p>
+              </div>
+          )}
+
+          {/* Follow-up scheduler */}
+          <div className="rounded-xl border border-border bg-card p-5">
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              <CalendarDays className="h-4 w-4" /> Agendar Seguimiento
+            </h3>
+            {negocio.proximoSeguimiento && (
+              <div className={cn(
+                "mb-3 rounded-lg px-3 py-2 text-sm",
+                new Date(negocio.proximoSeguimiento) < new Date()
+                  ? "bg-red-500/10 text-red-400"
+                  : "bg-yellow-500/10 text-yellow-400"
+              )}>
+                Próximo: {new Date(negocio.proximoSeguimiento).toLocaleDateString("es-CL", { weekday: "short", day: "numeric", month: "short" })}
+                {new Date(negocio.proximoSeguimiento) < new Date() && " (vencido)"}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <input
+                type="date"
+                value={seguimientoDate}
+                min={new Date().toISOString().split("T")[0]}
+                onChange={(e) => setSeguimientoDate(e.target.value)}
+                className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+              />
+              <button
+                onClick={handleSaveSeguimiento}
+                disabled={!seguimientoDate}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                Agendar
+              </button>
+            </div>
+          </div>
+        </div>
+        </>
+      )}
       {activeTab === "resumen" && showScoreInfo && <ScoreExplainerPanel />}
 
       {/* ═══ TAB: Análisis Técnico ═══ */}
@@ -632,27 +707,41 @@ export default function LeadDetailPage() {
           {contactos.length === 0 ? (
             <p className="text-sm text-muted-foreground">Sin contactos registrados</p>
           ) : (
-            <div className="space-y-3">
-              {contactos.map((c) => (
-                <div key={c.id} className="flex items-start gap-3 rounded-lg border border-border bg-muted/20 p-3">
-                  <Clock className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-foreground">{c.tipo}</span>
-                      <span className={cn(
-                        "rounded-full px-2 py-0.5 text-xs",
-                        c.resultado === "POSITIVO" ? "bg-green-500/20 text-green-400" :
-                        c.resultado === "NEGATIVO" ? "bg-red-500/20 text-red-400" :
-                        "bg-gray-500/20 text-gray-400"
-                      )}>
-                        {c.resultado?.replace(/_/g, " ") ?? "—"}
-                      </span>
-                      <span className="text-xs text-muted-foreground">{timeAgo(c.createdAt)}</span>
+            <div className="relative pl-6">
+              {/* Vertical timeline line */}
+              <div className="absolute left-[9px] top-2 bottom-2 w-px bg-border" />
+              {contactos.map((c) => {
+                const dotColor = c.resultado === "POSITIVO" ? "bg-green-500" : c.resultado === "NEGATIVO" ? "bg-red-500" : "bg-muted-foreground";
+                const iconMap: Record<string, React.ReactNode> = {
+                  LLAMADA: <Phone className="h-3 w-3" />,
+                  EMAIL: <Mail className="h-3 w-3" />,
+                  WHATSAPP: <MessageCircle className="h-3 w-3" />,
+                  VISITA: <MapPin className="h-3 w-3" />,
+                };
+                return (
+                  <div key={c.id} className="relative mb-4 last:mb-0">
+                    {/* Timeline dot */}
+                    <div className={cn("absolute -left-6 top-1.5 flex h-[18px] w-[18px] items-center justify-center rounded-full text-white", dotColor)}>
+                      {iconMap[c.tipo] ?? <Clock className="h-3 w-3" />}
                     </div>
-                    {c.notas && <p className="mt-1 text-sm text-muted-foreground">{c.notas}</p>}
+                    <div className="rounded-lg border border-border bg-muted/20 p-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-foreground">{c.tipo}</span>
+                        <span className={cn(
+                          "rounded-full px-2 py-0.5 text-xs",
+                          c.resultado === "POSITIVO" ? "bg-green-500/20 text-green-400" :
+                          c.resultado === "NEGATIVO" ? "bg-red-500/20 text-red-400" :
+                          "bg-gray-500/20 text-gray-400"
+                        )}>
+                          {c.resultado?.replace(/_/g, " ") ?? "—"}
+                        </span>
+                        <span className="ml-auto text-xs text-muted-foreground">{timeAgo(c.createdAt)}</span>
+                      </div>
+                      {c.notas && <p className="mt-1 text-sm text-muted-foreground">{c.notas}</p>}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
