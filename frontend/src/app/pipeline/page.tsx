@@ -77,7 +77,7 @@ function KanbanCard({ negocio, isDragOverlay }: { negocio: Negocio; isDragOverla
 
   const content = (
     <div className={cn(
-      "group rounded-lg border border-border bg-card p-3 transition-shadow hover:shadow-md",
+      "group rounded-xl border border-border bg-card p-3 transition-all hover:shadow-md",
       isDragging && "opacity-40",
       isDragOverlay && "shadow-2xl ring-2 ring-primary/50"
     )}>
@@ -98,15 +98,40 @@ function KanbanCard({ negocio, isDragOverlay }: { negocio: Negocio; isDragOverla
             {negocio.rubro} · {negocio.comuna}
           </p>
         </div>
+        {/* Presencia badge */}
+        <span className={cn(
+          "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+          negocio.estadoPresencia === "SIN_WEB" ? "bg-emerald-500/10 text-emerald-500" :
+          negocio.estadoPresencia === "SOLO_RRSS" ? "bg-lime-500/10 text-lime-500" :
+          "bg-muted text-muted-foreground"
+        )}>
+          {negocio.estadoPresencia === "SIN_WEB" ? "Sin web" :
+           negocio.estadoPresencia === "SOLO_RRSS" ? "RRSS" :
+           negocio.estadoPresencia?.replace(/_/g, " ").toLowerCase()}
+        </span>
       </div>
 
-      <div className="mt-2 flex items-center justify-between gap-2">
+      {/* Score bar */}
+      <div className="mt-2 flex items-center gap-2">
+        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted/50">
+          <div
+            className={cn(
+              "h-full rounded-full transition-all",
+              negocio.score >= 80 ? "bg-emerald-500" :
+              negocio.score >= 60 ? "bg-lime-500" :
+              negocio.score >= 40 ? "bg-amber-500" : "bg-rose-500"
+            )}
+            style={{ width: `${negocio.score}%` }}
+          />
+        </div>
         <ScoreTooltip
           score={negocio.score}
           nivel={negocio.nivelOportunidad}
           razones={negocio.razonesScore}
         />
+      </div>
 
+      <div className="mt-2 flex items-center justify-between gap-2">
         <div className="flex items-center gap-1">
           {whatsappLink && (
             <a
@@ -131,12 +156,20 @@ function KanbanCard({ negocio, isDragOverlay }: { negocio: Negocio; isDragOverla
             </a>
           )}
         </div>
+
+        {contactAge && (
+          <p className="text-[10px] text-muted-foreground">
+            {contactAge}
+          </p>
+        )}
       </div>
 
-      {contactAge && (
-        <p className="mt-1.5 text-[10px] text-muted-foreground">
-          Último contacto: {contactAge}
-        </p>
+      {/* Next follow-up */}
+      {negocio.proximoSeguimiento && (
+        <div className="mt-1.5 flex items-center gap-1 rounded-md bg-yellow-500/10 px-2 py-1 text-[10px] text-yellow-500">
+          <Calendar className="h-3 w-3" />
+          {new Date(negocio.proximoSeguimiento).toLocaleDateString("es-CL")}
+        </div>
       )}
     </div>
   );

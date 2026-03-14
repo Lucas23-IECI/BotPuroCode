@@ -3,7 +3,18 @@
 import { useEffect, useState } from "react";
 import { getZonas, getRubrosOSM, buscarOSM } from "@/lib/api";
 import { useToast } from "@/components/toast";
-import { Search, Download, MapPin, ExternalLink, CheckCircle2 } from "lucide-react";
+import {
+  Search,
+  MapPin,
+  ExternalLink,
+  CheckCircle2,
+  Phone,
+  Filter,
+  Globe,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+} from "lucide-react";
 
 interface OSMResult {
   nombre: string;
@@ -11,6 +22,8 @@ interface OSMResult {
   comuna: string;
   direccion?: string;
   sitioWeb?: string;
+  telefono?: string;
+  email?: string;
 }
 
 export default function BuscarOSMPage() {
@@ -22,6 +35,11 @@ export default function BuscarOSMPage() {
   const [results, setResults] = useState<OSMResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0, label: "" });
+  const [filterText, setFilterText] = useState("");
+  const [filterSinWeb, setFilterSinWeb] = useState(false);
+  const [showRubros, setShowRubros] = useState(true);
+  const [showZonas, setShowZonas] = useState(true);
+  const [selectedResult, setSelectedResult] = useState<OSMResult | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -49,6 +67,7 @@ export default function BuscarOSMPage() {
 
     setSearching(true);
     setResults([]);
+    setSelectedResult(null);
     const total = rubroList.length * zonaList.length;
     let current = 0;
     let allResults: OSMResult[] = [];
@@ -85,148 +104,303 @@ export default function BuscarOSMPage() {
     }
   };
 
+  // Filter results
+  const filtered = results.filter((r) => {
+    if (filterText && !r.nombre.toLowerCase().includes(filterText.toLowerCase())) return false;
+    if (filterSinWeb && r.sitioWeb) return false;
+    return true;
+  });
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Buscar en OpenStreetMap</h1>
         <p className="text-sm text-muted-foreground">
-          Descubre negocios en el Gran Concepción usando datos abiertos de OSM
+          Descubre negocios en el Gran Concepcion usando datos abiertos de OSM
         </p>
       </div>
 
-      {/* Controls */}
-      <div className="rounded-xl border border-border bg-card p-5">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {/* Rubros multi-select */}
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-foreground">
-              Rubros {selectedRubros.size > 0 && <span className="text-muted-foreground">({selectedRubros.size})</span>}
-            </label>
-            <div className="max-h-40 overflow-y-auto rounded-lg border border-input bg-background p-2">
-              {rubros.map((r) => (
-                <label key={r} className="flex items-center gap-2 rounded px-2 py-1 text-sm text-foreground hover:bg-muted cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectedRubros.has(r)}
-                    onChange={() => setSelectedRubros((s) => toggleItem(s, r))}
-                    className="rounded"
-                  />
-                  {r}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Comunas multi-select */}
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-foreground">
-              Comunas {selectedZonas.size > 0 && <span className="text-muted-foreground">({selectedZonas.size})</span>}
-            </label>
-            <div className="max-h-40 overflow-y-auto rounded-lg border border-input bg-background p-2">
-              {zonas.map((z) => (
-                <label key={z} className="flex items-center gap-2 rounded px-2 py-1 text-sm text-foreground hover:bg-muted cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectedZonas.has(z)}
-                    onChange={() => setSelectedZonas((s) => toggleItem(s, z))}
-                    className="rounded"
-                  />
-                  {z}
-                </label>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4 flex items-center justify-between">
-          <label className="flex items-center gap-2 text-sm text-foreground">
-            <input
-              type="checkbox"
-              checked={importar}
-              onChange={(e) => setImportar(e.target.checked)}
-              className="rounded"
-            />
-            Importar automáticamente
-          </label>
-
-          <button
-            onClick={handleSearch}
-            disabled={searching}
-            className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            {searching ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" />
-            ) : (
-              <Search className="h-4 w-4" />
+      <div className="flex flex-col gap-6 lg:flex-row">
+        {/* Left Panel — Controls */}
+        <div className="w-full shrink-0 space-y-4 lg:w-80">
+          {/* Rubros */}
+          <div className="rounded-2xl border border-border bg-card">
+            <button
+              onClick={() => setShowRubros((v) => !v)}
+              className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-foreground"
+            >
+              <span>
+                Rubros{" "}
+                {selectedRubros.size > 0 && (
+                  <span className="ml-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                    {selectedRubros.size}
+                  </span>
+                )}
+              </span>
+              {showRubros ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+            </button>
+            {showRubros && (
+              <div className="max-h-44 overflow-y-auto border-t border-border px-2 py-2">
+                {rubros.map((r) => (
+                  <label
+                    key={r}
+                    className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-muted"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedRubros.has(r)}
+                      onChange={() => setSelectedRubros((s) => toggleItem(s, r))}
+                      className="rounded"
+                    />
+                    {r}
+                  </label>
+                ))}
+              </div>
             )}
-            {searching ? "Buscando…" : "Buscar"}
-          </button>
+          </div>
+
+          {/* Comunas */}
+          <div className="rounded-2xl border border-border bg-card">
+            <button
+              onClick={() => setShowZonas((v) => !v)}
+              className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-foreground"
+            >
+              <span>
+                Comunas{" "}
+                {selectedZonas.size > 0 && (
+                  <span className="ml-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                    {selectedZonas.size}
+                  </span>
+                )}
+              </span>
+              {showZonas ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+            </button>
+            {showZonas && (
+              <div className="max-h-44 overflow-y-auto border-t border-border px-2 py-2">
+                {zonas.map((z) => (
+                  <label
+                    key={z}
+                    className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-muted"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedZonas.has(z)}
+                      onChange={() => setSelectedZonas((s) => toggleItem(s, z))}
+                      className="rounded"
+                    />
+                    {z}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Options + Search Button */}
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <label className="flex items-center gap-2 text-sm text-foreground">
+              <input
+                type="checkbox"
+                checked={importar}
+                onChange={(e) => setImportar(e.target.checked)}
+                className="rounded"
+              />
+              Importar automaticamente
+            </label>
+
+            <button
+              onClick={handleSearch}
+              disabled={searching}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            >
+              {searching ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Search className="h-4 w-4" />
+              )}
+              {searching ? "Buscando..." : "Buscar"}
+            </button>
+
+            {/* Progress */}
+            {searching && progress.total > 0 && (
+              <div className="mt-3">
+                <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
+                  <span className="truncate">{progress.label}</span>
+                  <span className="shrink-0">
+                    {progress.current}/{progress.total}
+                  </span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-muted/50">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all"
+                    style={{
+                      width: `${(progress.current / progress.total) * 100}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Progress indicator */}
-        {searching && progress.total > 0 && (
-          <div className="mt-4">
-            <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
-              <span>{progress.label}</span>
-              <span>{progress.current}/{progress.total}</span>
+        {/* Right Panel — Results */}
+        <div className="min-w-0 flex-1">
+          {results.length === 0 && !searching && (
+            <div className="flex h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-border text-muted-foreground">
+              <Search className="mb-2 h-8 w-8" />
+              <p className="text-sm">Selecciona rubros y comunas para buscar</p>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-muted/50">
-              <div
-                className="h-full rounded-full bg-primary transition-all"
-                style={{ width: `${(progress.current / progress.total) * 100}%` }}
-              />
+          )}
+
+          {results.length === 0 && searching && (
+            <div className="flex h-64 flex-col items-center justify-center rounded-2xl border border-border">
+              <Loader2 className="mb-2 h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Buscando negocios...</p>
             </div>
+          )}
+
+          {results.length > 0 && (
+            <div className="space-y-4">
+              {/* Filter bar */}
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="relative flex-1">
+                  <Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Filtrar resultados..."
+                    value={filterText}
+                    onChange={(e) => setFilterText(e.target.value)}
+                    className="w-full rounded-xl border border-input bg-background py-2 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground"
+                  />
+                </div>
+                <button
+                  onClick={() => setFilterSinWeb((v) => !v)}
+                  className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition-colors ${
+                    filterSinWeb
+                      ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-500"
+                      : "border-border text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Solo sin web
+                </button>
+                <span className="text-xs text-muted-foreground">
+                  {filtered.length} de {results.length}
+                </span>
+              </div>
+
+              {/* Cards grid */}
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {filtered.map((n, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedResult(n)}
+                    className={`group rounded-2xl border p-4 text-left transition-all hover:shadow-md ${
+                      selectedResult === n
+                        ? "border-primary bg-primary/5"
+                        : "border-border bg-card hover:border-primary/30"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-foreground">
+                          {n.nombre}
+                        </p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {n.tipo} &middot; {n.comuna}
+                        </p>
+                      </div>
+                      {!n.sitioWeb ? (
+                        <span className="shrink-0 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-500">
+                          Sin web
+                        </span>
+                      ) : (
+                        <Globe className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      )}
+                    </div>
+                    {n.direccion && (
+                      <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <MapPin className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{n.direccion}</span>
+                      </div>
+                    )}
+                    <div className="mt-2 flex items-center gap-3">
+                      {n.telefono && (
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Phone className="h-3 w-3" />
+                          {n.telefono}
+                        </span>
+                      )}
+                      {n.sitioWeb && (
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(n.sitioWeb, "_blank", "noopener,noreferrer");
+                          }}
+                          className="flex cursor-pointer items-center gap-1 text-xs text-blue-500 hover:underline"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          Ver web
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Preview Panel — shows when result selected on large screens */}
+        {selectedResult && (
+          <div className="hidden w-72 shrink-0 rounded-2xl border border-border bg-card p-5 xl:block">
+            <h3 className="text-sm font-bold text-foreground">{selectedResult.nombre}</h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {selectedResult.tipo} &middot; {selectedResult.comuna}
+            </p>
+
+            <div className="mt-4 space-y-3">
+              {selectedResult.direccion && (
+                <div className="flex items-start gap-2 text-xs">
+                  <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <span className="text-foreground">{selectedResult.direccion}</span>
+                </div>
+              )}
+              {selectedResult.telefono && (
+                <div className="flex items-center gap-2 text-xs">
+                  <Phone className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <span className="text-foreground">{selectedResult.telefono}</span>
+                </div>
+              )}
+              {selectedResult.sitioWeb && (
+                <div className="flex items-center gap-2 text-xs">
+                  <Globe className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <a
+                    href={selectedResult.sitioWeb}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="truncate text-blue-500 hover:underline"
+                  >
+                    {selectedResult.sitioWeb}
+                  </a>
+                </div>
+              )}
+              {selectedResult.email && (
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-muted-foreground">@</span>
+                  <span className="text-foreground">{selectedResult.email}</span>
+                </div>
+              )}
+            </div>
+
+            {!selectedResult.sitioWeb && (
+              <div className="mt-4 rounded-xl bg-emerald-500/10 p-3 text-center text-xs text-emerald-500">
+                <CheckCircle2 className="mx-auto mb-1 h-5 w-5" />
+                Oportunidad: no tiene web
+              </div>
+            )}
           </div>
         )}
       </div>
-
-      {/* Results */}
-      {results.length > 0 && (
-        <div className="rounded-xl border border-border">
-          <div className="flex items-center justify-between border-b border-border px-4 py-3">
-            <h3 className="text-sm font-medium text-foreground">
-              {results.length} resultados
-            </h3>
-          </div>
-          <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/50">
-              <tr>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Nombre</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Rubro</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Comuna</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Dirección</th>
-                <th className="px-4 py-3 text-center font-medium text-muted-foreground">Web</th>
-              </tr>
-            </thead>
-            <tbody>
-              {results.map((n, i) => (
-                <tr key={i} className="border-b border-border transition-colors hover:bg-muted/30">
-                  <td className="px-4 py-3 font-medium text-foreground">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                      {n.nombre}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">{n.tipo}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{n.comuna}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{n.direccion ?? "-"}</td>
-                  <td className="px-4 py-3 text-center">
-                    {n.sitioWeb ? (
-                      <a href={n.sitioWeb} target="_blank" rel="noopener noreferrer" className="inline-flex text-muted-foreground hover:text-foreground">
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
-                    ) : (
-                      <span className="flex items-center justify-center gap-1 text-xs text-green-400">
-                        <CheckCircle2 className="h-3.5 w-3.5" /> Sin web
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
     </div>
   );
 }

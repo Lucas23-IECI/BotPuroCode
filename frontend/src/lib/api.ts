@@ -73,6 +73,12 @@ export interface Stats {
   byNivel: Record<string, number>;
   byRubro: Array<{ rubro: string; count: number }>;
   byComuna: Array<{ comuna: string; count: number }>;
+  nuevos7d: number;
+  nuevos30d: number;
+  tasaConversion: number;
+  ganados: number;
+  topHot: Array<{ id: string; nombre: string; rubro: string; comuna: string; score: number; estadoPresencia: string; estadoContacto: string }>;
+  seguimientosPendientes: number;
 }
 
 // Helper to convert Stats maps to arrays for charts

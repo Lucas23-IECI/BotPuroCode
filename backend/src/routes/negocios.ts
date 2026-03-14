@@ -67,25 +67,48 @@ router.get("/", async (req: Request, res: Response) => {
 
 router.get("/stats", async (_req: Request, res: Response) => {
   try {
-    const [total, byPresencia, byContacto, byNivel, byRubro, byComuna] = await Promise.all([
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const [total, byPresencia, byContacto, byNivel, byRubro, byComuna, avgScore, nuevos7d, nuevos30d, topHot, seguimientosPendientes] = await Promise.all([
       prisma.negocio.count(),
       prisma.negocio.groupBy({ by: ["estadoPresencia"], _count: true }),
       prisma.negocio.groupBy({ by: ["estadoContacto"], _count: true }),
       prisma.negocio.groupBy({ by: ["nivelOportunidad"], _count: true }),
       prisma.negocio.groupBy({ by: ["rubro"], _count: true, orderBy: { _count: { rubro: "desc" } }, take: 20 }),
       prisma.negocio.groupBy({ by: ["comuna"], _count: true, orderBy: { _count: { comuna: "desc" } } }),
+      prisma.negocio.aggregate({ _avg: { score: true } }),
+      prisma.negocio.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
+      prisma.negocio.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
+      prisma.negocio.findMany({
+        where: { nivelOportunidad: { in: ["ALTA", "MEDIA_ALTA"] }, estadoContacto: { notIn: ["CERRADO_GANADO", "CERRADO_PERDIDO", "CERRADO_NO_EXISTE"] } },
+        orderBy: { score: "desc" },
+        take: 10,
+        select: { id: true, nombre: true, rubro: true, comuna: true, score: true, estadoPresencia: true, estadoContacto: true },
+      }),
+      prisma.negocio.count({ where: { proximoSeguimiento: { lte: now } } }),
     ]);
 
-    const avgScore = await prisma.negocio.aggregate({ _avg: { score: true } });
+    const byContactoMap = Object.fromEntries(byContacto.map((c) => [c.estadoContacto, c._count]));
+    const ganados = byContactoMap["CERRADO_GANADO"] ?? 0;
+    const contactados = (byContactoMap["CONTACTADO"] ?? 0) + (byContactoMap["PROPUESTA_ENVIADA"] ?? 0) + (byContactoMap["NEGOCIANDO"] ?? 0) + ganados + (byContactoMap["CERRADO_PERDIDO"] ?? 0);
+    const tasaConversion = contactados > 0 ? Math.round((ganados / contactados) * 100) : 0;
 
     res.json({
       total,
       avgScore: Math.round(avgScore._avg.score ?? 0),
       byPresencia: Object.fromEntries(byPresencia.map((p) => [p.estadoPresencia, p._count])),
-      byContacto: Object.fromEntries(byContacto.map((c) => [c.estadoContacto, c._count])),
+      byContacto: byContactoMap,
       byNivel: Object.fromEntries(byNivel.map((n) => [n.nivelOportunidad, n._count])),
       byRubro: byRubro.map((r) => ({ rubro: r.rubro, count: r._count })),
       byComuna: byComuna.map((c) => ({ comuna: c.comuna, count: c._count })),
+      nuevos7d,
+      nuevos30d,
+      tasaConversion,
+      ganados,
+      topHot,
+      seguimientosPendientes,
     });
   } catch (err) {
     res.status(500).json({ error: String(err) });

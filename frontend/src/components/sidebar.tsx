@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 import {
   LayoutDashboard,
   Users,
@@ -13,6 +14,10 @@ import {
   Download,
   PanelLeftClose,
   PanelLeftOpen,
+  Sun,
+  Moon,
+  Menu,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,29 +31,109 @@ const NAV_ITEMS = [
   { href: "/export", label: "Exportar", icon: Download },
 ];
 
-const SidebarCtx = createContext({ collapsed: false, toggle: () => {} });
+const SidebarCtx = createContext({ collapsed: false, toggle: () => {}, mobileOpen: false, setMobileOpen: (_v: boolean) => {} });
 export const useSidebar = () => useContext(SidebarCtx);
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   return (
-    <SidebarCtx.Provider value={{ collapsed, toggle: () => setCollapsed((c) => !c) }}>
+    <SidebarCtx.Provider value={{ collapsed, toggle: () => setCollapsed((c) => !c), mobileOpen, setMobileOpen }}>
       {children}
     </SidebarCtx.Provider>
   );
 }
 
-export function Sidebar() {
-  const pathname = usePathname();
-  const { collapsed, toggle } = useSidebar();
+function ThemeToggle({ collapsed }: { collapsed: boolean }) {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+
+  const isDark = theme === "dark";
 
   return (
-    <aside
+    <button
+      onClick={() => setTheme(isDark ? "light" : "dark")}
       className={cn(
-        "fixed left-0 top-0 z-40 h-screen border-r border-border bg-card transition-all duration-200",
-        collapsed ? "w-16" : "w-64"
+        "flex items-center rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+        collapsed ? "justify-center" : "gap-3"
       )}
+      title={isDark ? "Modo claro" : "Modo oscuro"}
     >
+      {isDark ? <Sun className="h-4 w-4 shrink-0" /> : <Moon className="h-4 w-4 shrink-0" />}
+      {!collapsed && (isDark ? "Modo claro" : "Modo oscuro")}
+    </button>
+  );
+}
+
+export function MobileMenuButton() {
+  const { setMobileOpen } = useSidebar();
+  return (
+    <button
+      onClick={() => setMobileOpen(true)}
+      className="fixed left-3 top-3 z-50 rounded-lg border border-border bg-card p-2 text-foreground shadow-lg lg:hidden"
+      aria-label="Abrir menu"
+    >
+      <Menu className="h-5 w-5" />
+    </button>
+  );
+}
+
+export function Sidebar() {
+  const pathname = usePathname();
+  const { collapsed, toggle, mobileOpen, setMobileOpen } = useSidebar();
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname, setMobileOpen]);
+
+  return (
+    <>
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      <aside
+        className={cn(
+          "fixed left-0 top-0 z-50 h-screen border-r border-border bg-card transition-all duration-200",
+          // Desktop
+          "max-lg:hidden",
+          collapsed ? "w-16" : "w-64"
+        )}
+      >
+        <SidebarInner collapsed={collapsed} toggle={toggle} pathname={pathname} />
+      </aside>
+
+      {/* Mobile sidebar */}
+      <aside
+        className={cn(
+          "fixed left-0 top-0 z-50 h-screen w-64 border-r border-border bg-card transition-transform duration-200 lg:hidden",
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        <div className="absolute right-2 top-3">
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <SidebarInner collapsed={false} toggle={toggle} pathname={pathname} />
+      </aside>
+    </>
+  );
+}
+
+function SidebarInner({ collapsed, toggle, pathname }: { collapsed: boolean; toggle: () => void; pathname: string }) {
+  return (
+    <div className="flex h-full flex-col">
       {/* Logo */}
       <div className="flex h-16 items-center justify-between border-b border-border px-3">
         <Link href="/" className="flex items-center gap-2 overflow-hidden">
@@ -64,7 +149,7 @@ export function Sidebar() {
         </Link>
         <button
           onClick={toggle}
-          className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+          className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground max-lg:hidden"
           title={collapsed ? "Expandir" : "Colapsar"}
         >
           {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
@@ -72,7 +157,7 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex flex-col gap-1 p-2">
+      <nav className="flex flex-1 flex-col gap-1 p-2">
         {NAV_ITEMS.map((item) => {
           const isActive =
             item.href === "/"
@@ -98,6 +183,11 @@ export function Sidebar() {
           );
         })}
       </nav>
-    </aside>
+
+      {/* Bottom: theme toggle */}
+      <div className="border-t border-border p-2">
+        <ThemeToggle collapsed={collapsed} />
+      </div>
+    </div>
   );
 }
