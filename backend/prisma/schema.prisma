@@ -300,3 +300,26 @@ model Notificacion {
 
   @@index([userId, leida])
 }
+
+model Automatizacion {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  nombre    String
+  activa    Boolean @default(true)
+
+  // Trigger: CAMBIO_ESTADO, SCORE_MAYOR, SCORE_MENOR, NUEVO_LEAD
+  trigger   String
+
+  // Condición (JSON): { "estadoContactoAnterior": "NO_CONTACTADO", "estadoContactoNuevo": "CONTACTADO" }
+  // o { "scoreUmbral": 70 } o {} para NUEVO_LEAD
+  condicion String  @default("{}")
+
+  // Acción: CREAR_NOTIFICACION, CAMBIAR_ESTADO, ENVIAR_TEMPLATE
+  accion    String
+
+  // Config acción (JSON): { "titulo": "...", "mensaje": "..." }
+  // o { "nuevoEstado": "CONTACTADO" } o { "plantillaId": "...", "tipo": "WHATSAPP" }
+  accionConfig String @default("{}")
+}

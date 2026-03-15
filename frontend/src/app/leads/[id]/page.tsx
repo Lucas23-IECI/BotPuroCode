@@ -9,9 +9,17 @@ import {
   updateEstadoContacto,
   deleteNegocio,
   enriquecerGooglePlaces,
+  createPropuesta,
+  getPropuestas,
+  updatePropuesta,
+  getPropuestaPDFUrl,
+  asignarLead,
+  getUsers,
   type Negocio,
   type Analisis,
   type Contacto,
+  type Propuesta,
+  type User,
 } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/toast";
@@ -41,6 +49,8 @@ import {
   Map,
   Sparkles,
   ShieldCheck,
+  FileText,
+  Download,
 } from "lucide-react";
 
 const CRM_STATES = [
@@ -144,7 +154,7 @@ const PRESENCIA_LABELS: Record<string, string> = {
   PENDIENTE: "Pendiente",
 };
 
-type Tab = "resumen" | "analisis" | "historial";
+type Tab = "resumen" | "analisis" | "historial" | "propuestas";
 
 export default function LeadDetailPage() {
   const params = useParams();
@@ -167,13 +177,20 @@ export default function LeadDetailPage() {
     notas: "",
   });
   const [seguimientoDate, setSeguimientoDate] = useState("");
+  const [propuestas, setPropuestas] = useState<Propuesta[]>([]);
+  const [showPropForm, setShowPropForm] = useState(false);
+  const [propTipo, setPropTipo] = useState("landing");
+  const [propDescuento, setPropDescuento] = useState(0);
+  const [creatingProp, setCreatingProp] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
 
   const fetchData = async () => {
     try {
-      const result = await getNegocio(id);
+      const [result, props] = await Promise.all([getNegocio(id), getPropuestas(id)]);
       setNegocio(result);
       setAnalisis(result.analisis ?? []);
       setContactos(result.contactos ?? []);
+      setPropuestas(props);
     } catch {
       toast("Error al cargar el lead", "error");
     } finally {
@@ -183,6 +200,7 @@ export default function LeadDetailPage() {
 
   useEffect(() => {
     fetchData();
+    getUsers().then(setUsers).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -359,6 +377,28 @@ export default function LeadDetailPage() {
               <span className="text-muted-foreground">({negocio.gmapsReviews ?? 0} reseñas)</span>
             </div>
           )}
+
+          {/* Lead assignment */}
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Asignado a:</span>
+            <select
+              value={(negocio as any).asignadoAId ?? ""}
+              onChange={async (e) => {
+                const val = e.target.value || null;
+                try {
+                  await asignarLead(id, val);
+                  toast(val ? "Lead asignado" : "Asignación removida", "success");
+                  fetchData();
+                } catch { toast("Error al asignar", "error"); }
+              }}
+              className="rounded-lg border border-input bg-background px-2 py-1 text-xs text-foreground"
+            >
+              <option value="">Sin asignar</option>
+              {users.map((u) => (
+                <option key={u.id} value={u.id}>{u.nombre}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
@@ -441,6 +481,7 @@ export default function LeadDetailPage() {
         {([
           { key: "resumen" as Tab, label: "Resumen" },
           { key: "analisis" as Tab, label: "Análisis Técnico" },
+          { key: "propuestas" as Tab, label: `Propuestas (${propuestas.length})` },
           { key: "historial" as Tab, label: `Historial (${contactos.length})` },
         ]).map((t) => (
           <button
@@ -611,6 +652,22 @@ export default function LeadDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* Google Photos */}
+        {negocio.fotosUrl && negocio.fotosUrl.length > 0 && (
+          <div className="rounded-xl border border-border bg-card p-5">
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Fotos Google</h3>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {negocio.fotosUrl.map((url: string, i: number) => (
+                <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="group relative overflow-hidden rounded-lg border border-border">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt={`Foto ${i + 1}`} className="h-36 w-full object-cover transition-transform group-hover:scale-105" loading="lazy" />
+                  <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/20" />
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
         </>
       )}
       {activeTab === "resumen" && showScoreInfo && <ScoreExplainerPanel />}
@@ -720,6 +777,101 @@ export default function LeadDetailPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* ═══ TAB: Propuestas ═══ */}
+      {activeTab === "propuestas" && (
+        <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+          {!showPropForm ? (
+            <button onClick={() => setShowPropForm(true)}
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+              + Nueva Propuesta
+            </button>
+          ) : (
+            <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">Tipo de Servicio</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { value: "landing", label: "Landing", precio: "$220.000" },
+                    { value: "corporativa", label: "Corporativa", precio: "$380.000" },
+                    { value: "ecommerce", label: "E-Commerce", precio: "$550.000" },
+                  ].map((t) => (
+                    <button key={t.value} onClick={() => setPropTipo(t.value)}
+                      className={cn("rounded-lg border p-2 text-center text-xs transition-colors",
+                        propTipo === t.value ? "border-primary bg-primary/10 text-primary" : "border-input bg-background text-muted-foreground hover:bg-muted"
+                      )}>
+                      <div className="font-medium">{t.label}</div>
+                      <div>{t.precio}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">Descuento (%)</label>
+                <input type="number" min={0} max={50} value={propDescuento} onChange={(e) => setPropDescuento(Number(e.target.value))}
+                  className="w-24 rounded-lg border border-input bg-background px-3 py-1.5 text-sm text-foreground" />
+              </div>
+              <div className="flex gap-2">
+                <button onClick={async () => {
+                  setCreatingProp(true);
+                  try {
+                    await createPropuesta({ negocioId: id, tipoServicio: propTipo, descuento: propDescuento > 0 ? propDescuento : undefined });
+                    toast("Propuesta creada", "success");
+                    setShowPropForm(false);
+                    setPropDescuento(0);
+                    fetchData();
+                  } catch { toast("Error al crear propuesta", "error"); }
+                  finally { setCreatingProp(false); }
+                }} disabled={creatingProp} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50">
+                  {creatingProp ? "Creando…" : "Crear"}
+                </button>
+                <button onClick={() => setShowPropForm(false)} className="rounded-lg border border-input px-4 py-2 text-sm text-muted-foreground">Cancelar</button>
+              </div>
+            </div>
+          )}
+
+          {propuestas.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Sin propuestas para este negocio</p>
+          ) : (
+            <div className="space-y-2">
+              {propuestas.map((p) => {
+                const estadoColor =
+                  p.estado === "ACEPTADA" ? "bg-green-500/20 text-green-400" :
+                  p.estado === "RECHAZADA" ? "bg-red-500/20 text-red-400" :
+                  p.estado === "ENVIADA" ? "bg-blue-500/20 text-blue-400" :
+                  "bg-gray-500/20 text-gray-400";
+                return (
+                  <div key={p.id} className="flex items-center gap-3 rounded-lg border border-border bg-muted/20 p-3">
+                    <FileText className="h-5 w-5 text-primary shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-foreground capitalize">{p.tipoServicio}</span>
+                        <span className={cn("rounded-full px-2 py-0.5 text-xs", estadoColor)}>{p.estado}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        ${p.precioFinal.toLocaleString("es-CL")} CLP
+                        {p.descuento > 0 && <span className="text-green-400 ml-1">(-{p.descuento}%)</span>}
+                        {" · "}{new Date(p.createdAt).toLocaleDateString("es-CL")}
+                      </p>
+                    </div>
+                    <select value={p.estado} onChange={(e) => updatePropuesta(p.id, e.target.value).then(fetchData)}
+                      className="rounded border border-input bg-background px-2 py-1 text-xs text-foreground">
+                      <option value="BORRADOR">Borrador</option>
+                      <option value="ENVIADA">Enviada</option>
+                      <option value="ACEPTADA">Aceptada</option>
+                      <option value="RECHAZADA">Rechazada</option>
+                    </select>
+                    <a href={getPropuestaPDFUrl(p.id)} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-1 rounded border border-input px-2 py-1 text-xs text-foreground hover:bg-muted">
+                      <Download className="h-3 w-3" /> PDF
+                    </a>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       )}
 
       {/* ═══ TAB: Historial ═══ */}

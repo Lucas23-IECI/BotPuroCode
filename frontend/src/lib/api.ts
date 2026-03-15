@@ -96,6 +96,7 @@ export interface Stats {
   ganados: number;
   topHot: Array<{ id: string; nombre: string; rubro: string; comuna: string; score: number; estadoPresencia: string; estadoContacto: string }>;
   seguimientosPendientes: number;
+  conversionPorComuna: Array<{ comuna: string; total: number; ganados: number }>;
 }
 
 // Helper to convert Stats maps to arrays for charts
@@ -438,4 +439,74 @@ export function marcarTodasLeidas() {
 
 export function enriquecerGooglePlaces(negocioId: string) {
   return request<{ status: string; reason?: string }>(`/negocios/${negocioId}/enriquecer`, { method: "POST" });
+}
+
+// ─── Asignación de leads ─────────────────────────────────
+
+export function asignarLead(negocioId: string, asignadoAId: string | null) {
+  return request<Negocio>(`/negocios/${negocioId}/asignar`, {
+    method: "PATCH",
+    body: JSON.stringify({ asignadoAId }),
+  });
+}
+
+// ─── Cambiar contraseña ──────────────────────────────────
+
+export function changePassword(currentPassword: string, newPassword: string) {
+  return request<{ message: string }>("/auth/me/password", {
+    method: "PATCH",
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+}
+
+export function deleteNotificacion(id: string) {
+  return request("/notificaciones/" + id, { method: "DELETE" });
+}
+
+// ─── Automatizaciones ────────────────────────────────────
+
+export interface Automatizacion {
+  id: string;
+  createdAt: string;
+  nombre: string;
+  activa: boolean;
+  trigger: string;
+  condicion: string;
+  accion: string;
+  accionConfig: string;
+}
+
+export function getAutomatizaciones() {
+  return request<Automatizacion[]>("/automatizaciones");
+}
+
+export function createAutomatizacion(data: {
+  nombre: string;
+  trigger: string;
+  condicion: Record<string, unknown>;
+  accion: string;
+  accionConfig: Record<string, unknown>;
+}) {
+  return request<Automatizacion>("/automatizaciones", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateAutomatizacion(id: string, data: Partial<{
+  nombre: string;
+  trigger: string;
+  condicion: Record<string, unknown>;
+  accion: string;
+  accionConfig: Record<string, unknown>;
+  activa: boolean;
+}>) {
+  return request<Automatizacion>("/automatizaciones/" + id, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteAutomatizacion(id: string) {
+  return request("/automatizaciones/" + id, { method: "DELETE" });
 }

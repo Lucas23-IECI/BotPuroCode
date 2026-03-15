@@ -6,13 +6,16 @@ import {
   getPipeline,
   getSeguimientos,
   updateEstadoContacto,
+  getPlantillas,
+  renderPlantilla,
   type Negocio,
   type Seguimiento,
+  type Plantilla,
 } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/toast";
 import { ScoreTooltip } from "@/components/score-explainer";
-import { Calendar, GripVertical, Phone, MessageCircle, MapPin } from "lucide-react";
+import { Calendar, GripVertical, Phone, MessageCircle, MapPin, Copy, X } from "lucide-react";
 import {
   DndContext,
   DragOverlay,
@@ -53,7 +56,7 @@ function timeAgo(dateStr: string | null | undefined): string | null {
 
 /* ─── Draggable Card ─────────────────────────────────────── */
 
-function KanbanCard({ negocio, isDragOverlay }: { negocio: Negocio; isDragOverlay?: boolean }) {
+function KanbanCard({ negocio, isDragOverlay, onQuickWa }: { negocio: Negocio; isDragOverlay?: boolean; onQuickWa?: (n: Negocio) => void }) {
   const {
     attributes,
     listeners,
@@ -139,11 +142,20 @@ function KanbanCard({ negocio, isDragOverlay }: { negocio: Negocio; isDragOverla
               target="_blank"
               rel="noopener noreferrer"
               className="rounded p-1 text-green-400 hover:bg-green-500/10"
-              title="WhatsApp"
+              title="WhatsApp directo"
               onClick={(e) => e.stopPropagation()}
             >
               <MessageCircle className="h-3.5 w-3.5" />
             </a>
+          )}
+          {whatsappLink && onQuickWa && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onQuickWa(negocio); }}
+              className="rounded p-1 text-emerald-300 hover:bg-emerald-500/10"
+              title="WhatsApp con plantilla"
+            >
+              <Copy className="h-3.5 w-3.5" />
+            </button>
           )}
           {negocio.telefono && (
             <a
@@ -188,9 +200,11 @@ function KanbanCard({ negocio, isDragOverlay }: { negocio: Negocio; isDragOverla
 function KanbanColumn({
   col,
   items,
+  onQuickWa,
 }: {
   col: (typeof COLUMNS)[number];
   items: Negocio[];
+  onQuickWa: (n: Negocio) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.key });
 
@@ -222,7 +236,7 @@ function KanbanColumn({
             {isOver ? "Soltar aquí" : "Sin leads"}
           </p>
         ) : (
-          items.map((n) => <KanbanCard key={n.id} negocio={n} />)
+          items.map((n) => <KanbanCard key={n.id} negocio={n} onQuickWa={onQuickWa} />)
         )}
       </div>
     </div>
@@ -237,6 +251,13 @@ export default function PipelinePage() {
   const [loading, setLoading] = useState(true);
   const [activeNegocio, setActiveNegocio] = useState<Negocio | null>(null);
   const { toast } = useToast();
+
+  // Quick WhatsApp modal state
+  const [waModalNegocio, setWaModalNegocio] = useState<Negocio | null>(null);
+  const [plantillas, setPlantillas] = useState<Plantilla[]>([]);
+  const [selectedPlantilla, setSelectedPlantilla] = useState<string>("");
+  const [renderedMsg, setRenderedMsg] = useState("");
+  const [rendering, setRendering] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -256,12 +277,43 @@ export default function PipelinePage() {
 
   useEffect(() => {
     fetchAll();
+    getPlantillas({ tipo: "WHATSAPP" }).then(setPlantillas).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleDragStart = (event: DragStartEvent) => {
     const negocio = event.active.data.current?.negocio as Negocio | undefined;
     setActiveNegocio(negocio ?? null);
+  };
+
+  const openWaModal = (neg: Negocio) => {
+    setWaModalNegocio(neg);
+    setRenderedMsg("");
+    setSelectedPlantilla("");
+  };
+
+  const handleRenderTemplate = async () => {
+    if (!selectedPlantilla || !waModalNegocio) return;
+    setRendering(true);
+    try {
+      const result = await renderPlantilla(selectedPlantilla, waModalNegocio.id);
+      setRenderedMsg(result.cuerpo);
+    } catch {
+      toast("Error al renderizar plantilla", "error");
+    } finally {
+      setRendering(false);
+    }
+  };
+
+  const handleCopyAndOpen = () => {
+    if (!waModalNegocio) return;
+    navigator.clipboard.writeText(renderedMsg);
+    const phone = (waModalNegocio.whatsapp || waModalNegocio.telefono || "").replace(/\D/g, "");
+    if (phone) {
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(renderedMsg)}`, "_blank");
+    }
+    toast("Mensaje copiado y WhatsApp abierto", "success");
+    setWaModalNegocio(null);
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -363,6 +415,7 @@ export default function PipelinePage() {
               key={col.key}
               col={col}
               items={pipeline[col.key] ?? []}
+              onQuickWa={openWaModal}
             />
           ))}
         </div>
@@ -375,6 +428,67 @@ export default function PipelinePage() {
           ) : null}
         </DragOverlay>
       </DndContext>
+
+      {/* Quick WhatsApp Modal */}
+      {waModalNegocio && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-foreground">
+                WhatsApp — {waModalNegocio.nombre}
+              </h2>
+              <button onClick={() => setWaModalNegocio(null)} className="text-muted-foreground hover:text-foreground">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Plantilla</label>
+              <select
+                value={selectedPlantilla}
+                onChange={(e) => { setSelectedPlantilla(e.target.value); setRenderedMsg(""); }}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+              >
+                <option value="">Seleccionar plantilla…</option>
+                {plantillas.map((p) => (
+                  <option key={p.id} value={p.id}>{p.nombre}</option>
+                ))}
+              </select>
+            </div>
+
+            {selectedPlantilla && !renderedMsg && (
+              <button
+                onClick={handleRenderTemplate}
+                disabled={rendering}
+                className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {rendering ? "Generando…" : "Generar mensaje"}
+              </button>
+            )}
+
+            {renderedMsg && (
+              <>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Mensaje</label>
+                  <textarea
+                    value={renderedMsg}
+                    onChange={(e) => setRenderedMsg(e.target.value)}
+                    rows={5}
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                  />
+                </div>
+                <button
+                  onClick={handleCopyAndOpen}
+                  className="w-full rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-green-500/20 hover:scale-[1.02] transition-transform"
+                >
+                  <MessageCircle className="mr-2 inline h-4 w-4" />
+                  Copiar y abrir WhatsApp
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

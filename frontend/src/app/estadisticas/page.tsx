@@ -12,6 +12,7 @@ import {
   Users,
   Award,
   Clock,
+  MapPin,
 } from "lucide-react";
 
 /* ─── Reusable bar ────────────────────────────────────── */
@@ -98,6 +99,10 @@ export default function EstadisticasPage() {
   const porRubro = statsRubroArray(stats);
   const porComuna = statsComunaArray(stats);
   const porEstadoContacto = statsContactoArray(stats);
+  const convComuna = (stats.conversionPorComuna ?? []).map((c) => ({
+    ...c,
+    tasa: c.total > 0 ? Math.round((c.ganados / c.total) * 100) : 0,
+  })).sort((a, b) => b.tasa - a.tasa || b.ganados - a.ganados);
 
   const maxPresencia = Math.max(...porPresencia.map((p) => p._count), 1);
   const maxNivel = Math.max(...porNivel.map((p) => p._count), 1);
@@ -277,6 +282,66 @@ export default function EstadisticasPage() {
           </div>
         </div>
       </div>
+
+      {/* Conversion Heatmap by Zone */}
+      {convComuna.length > 0 && (
+        <div className="rounded-xl border border-border bg-card p-5">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="rounded-lg bg-emerald-500/10 p-2"><MapPin className="h-5 w-5 text-emerald-400" /></div>
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Conversión por Zona</h3>
+              <p className="text-xs text-muted-foreground">Comunas con mejor tasa de conversión (mín. 2 leads)</p>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
+                  <th className="pb-2 pr-4">Comuna</th>
+                  <th className="pb-2 pr-4 text-center">Total</th>
+                  <th className="pb-2 pr-4 text-center">Ganados</th>
+                  <th className="pb-2 pr-4 text-center">Tasa</th>
+                  <th className="pb-2">Conversión</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {convComuna.map((c) => (
+                  <tr key={c.comuna} className="group hover:bg-muted/30">
+                    <td className="py-2 pr-4 font-medium text-foreground">{c.comuna}</td>
+                    <td className="py-2 pr-4 text-center text-muted-foreground">{c.total}</td>
+                    <td className="py-2 pr-4 text-center text-muted-foreground">{c.ganados}</td>
+                    <td className="py-2 pr-4 text-center">
+                      <span className={cn(
+                        "inline-block rounded-full px-2 py-0.5 text-xs font-semibold",
+                        c.tasa >= 50 ? "bg-green-500/20 text-green-400" :
+                        c.tasa >= 25 ? "bg-yellow-500/20 text-yellow-400" :
+                        c.tasa > 0 ? "bg-orange-500/20 text-orange-400" :
+                        "bg-muted text-muted-foreground"
+                      )}>
+                        {c.tasa}%
+                      </span>
+                    </td>
+                    <td className="py-2">
+                      <div className="h-3 w-full overflow-hidden rounded-full bg-muted/50">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-all duration-500",
+                            c.tasa >= 50 ? "bg-green-500" :
+                            c.tasa >= 25 ? "bg-yellow-500" :
+                            c.tasa > 0 ? "bg-orange-500" :
+                            "bg-gray-500"
+                          )}
+                          style={{ width: `${c.tasa}%` }}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

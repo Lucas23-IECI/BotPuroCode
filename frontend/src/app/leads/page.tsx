@@ -133,6 +133,7 @@ export default function LeadsPage() {
     limit: 20,
     orderBy: "score" as string,
     order: "desc" as "asc" | "desc",
+    asignadoAId: "" as string,
   });
 
   const fetchData = useCallback(async () => {
@@ -287,6 +288,26 @@ export default function LeadsPage() {
             <option key={n} value={n}>{n}</option>
           ))}
         </select>
+
+        <button
+          onClick={() => {
+            const stored = localStorage.getItem("botpurocode_user");
+            const userId = stored ? JSON.parse(stored)?.id : "";
+            setFilters((f) => ({
+              ...f,
+              asignadoAId: f.asignadoAId ? "" : userId,
+              page: 1,
+            }));
+          }}
+          className={cn(
+            "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+            filters.asignadoAId
+              ? "bg-primary text-primary-foreground"
+              : "border border-input bg-card text-muted-foreground hover:bg-muted"
+          )}
+        >
+          {filters.asignadoAId ? "Mis leads" : "Todos"}
+        </button>
       </div>
 
       {/* Table */}

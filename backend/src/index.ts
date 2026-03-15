@@ -10,6 +10,7 @@ import authRouter from "./routes/auth";
 import plantillasRouter from "./routes/plantillas";
 import propuestasRouter from "./routes/propuestas";
 import notificacionesRouter from "./routes/notificaciones";
+import automatizacionesRouter from "./routes/automatizaciones";
 import { iniciarCronJobs } from "./cron/jobs";
 
 const app = express();
@@ -34,6 +35,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/plantillas", plantillasRouter);
 app.use("/api/propuestas", propuestasRouter);
 app.use("/api/notificaciones", notificacionesRouter);
+app.use("/api/automatizaciones", automatizacionesRouter);
 
 // ─── Health ──────────────────────────────────────────────
 

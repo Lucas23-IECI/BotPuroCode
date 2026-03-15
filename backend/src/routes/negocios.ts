@@ -10,8 +10,12 @@ import { parseCSV } from "../services/csv.service";
 import { checkPresencia } from "../services/presencia.service";
 import { calcularScore } from "../services/scoring.service";
 import { calcularCalidadDatos } from "../services/calidad-datos.service";
+import { enriquecerConGooglePlaces } from "../services/google-places.service";
+import { evaluarAutomatizaciones } from "../services/automatizaciones.service";
+import { requireAuth } from "../middleware/auth";
 
 const router = Router();
+router.use(requireAuth);
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 // ─── GET /api/negocios — Listar con filtros y paginación ─
@@ -28,6 +32,7 @@ router.get("/", async (req: Request, res: Response) => {
     if (where.estadoPresencia) prismaWhere.estadoPresencia = where.estadoPresencia;
     if (where.estadoContacto) prismaWhere.estadoContacto = where.estadoContacto;
     if (where.nivelOportunidad) prismaWhere.nivelOportunidad = where.nivelOportunidad;
+    if ((where as Record<string, unknown>).asignadoAId) prismaWhere.asignadoAId = (where as Record<string, unknown>).asignadoAId;
 
     if (scoreMin !== undefined || scoreMax !== undefined) {
       prismaWhere.score = {};
@@ -72,7 +77,7 @@ router.get("/stats", async (_req: Request, res: Response) => {
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    const [total, byPresencia, byContacto, byNivel, byRubro, byComuna, avgScore, nuevos7d, nuevos30d, topHot, seguimientosPendientes] = await Promise.all([
+    const [total, byPresencia, byContacto, byNivel, byRubro, byComuna, avgScore, nuevos7d, nuevos30d, topHot, seguimientosPendientes, ganadosPorComuna] = await Promise.all([
       prisma.negocio.count(),
       prisma.negocio.groupBy({ by: ["estadoPresencia"], _count: true }),
       prisma.negocio.groupBy({ by: ["estadoContacto"], _count: true }),
@@ -89,6 +94,7 @@ router.get("/stats", async (_req: Request, res: Response) => {
         select: { id: true, nombre: true, rubro: true, comuna: true, score: true, estadoPresencia: true, estadoContacto: true },
       }),
       prisma.negocio.count({ where: { proximoSeguimiento: { lte: now } } }),
+      prisma.negocio.groupBy({ by: ["comuna"], where: { estadoContacto: "CERRADO_GANADO" }, _count: true }),
     ]);
 
     const byContactoMap = Object.fromEntries(byContacto.map((c) => [c.estadoContacto, c._count]));
@@ -110,6 +116,10 @@ router.get("/stats", async (_req: Request, res: Response) => {
       ganados,
       topHot,
       seguimientosPendientes,
+      conversionPorComuna: byComuna.map((c) => {
+        const g = ganadosPorComuna.find((gc) => gc.comuna === c.comuna);
+        return { comuna: c.comuna, total: c._count, ganados: g?._count ?? 0 };
+      }).filter((c) => c.total >= 2).slice(0, 20),
     });
   } catch (err) {
     res.status(500).json({ error: String(err) });
@@ -159,6 +169,14 @@ router.post("/", async (req: Request, res: Response) => {
     // Async: check presencia and score
     runPresenciaAndScore(negocio.id).catch(console.error);
 
+    // Auto-enrich with Google Places if API key is configured
+    if (process.env.GOOGLE_PLACES_API_KEY) {
+      enriquecerConGooglePlaces(negocio.id).catch(console.error);
+    }
+
+    // Trigger automations for new lead
+    evaluarAutomatizaciones({ trigger: "NUEVO_LEAD", negocioId: negocio.id }).catch(console.error);
+
     res.status(201).json(negocio);
   } catch (err) {
     res.status(400).json({ error: String(err) });
@@ -170,10 +188,28 @@ router.post("/", async (req: Request, res: Response) => {
 router.patch("/:id", async (req: Request, res: Response) => {
   try {
     const data = negocioUpdateSchema.parse(req.body);
+    const bodyEstado = req.body.estadoContacto as string | undefined;
+
+    // Fetch previous state for automation triggers
+    const prev = bodyEstado
+      ? await prisma.negocio.findUnique({ where: { id: req.params.id as string }, select: { estadoContacto: true } })
+      : null;
+
     const negocio = await prisma.negocio.update({
       where: { id: req.params.id as string },
-      data,
+      data: { ...data, ...(bodyEstado ? { estadoContacto: bodyEstado as any } : {}) },
     });
+
+    // Trigger automations if estado changed
+    if (bodyEstado && prev && prev.estadoContacto !== bodyEstado) {
+      evaluarAutomatizaciones({
+        trigger: "CAMBIO_ESTADO",
+        negocioId: negocio.id,
+        estadoAnterior: prev.estadoContacto,
+        estadoNuevo: bodyEstado,
+      }).catch(console.error);
+    }
+
     res.json(negocio);
   } catch (err) {
     res.status(400).json({ error: String(err) });
@@ -247,6 +283,43 @@ router.post("/csv", upload.single("file"), async (req: Request, res: Response) =
     });
   } catch (err) {
     res.status(500).json({ error: String(err) });
+  }
+});
+
+// ─── POST /api/negocios/:id/enriquecer — Google Places ───
+
+router.post("/:id/enriquecer", async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const negocio = await prisma.negocio.findUnique({ where: { id } });
+    if (!negocio) {
+      res.status(404).json({ error: "Negocio no encontrado" });
+      return;
+    }
+    const result = await enriquecerConGooglePlaces(id);
+    if (!result) {
+      res.json({ status: "skipped", reason: "Google Places API key no configurada o negocio no encontrado" });
+      return;
+    }
+    res.json({ status: "ok", data: result });
+  } catch (err) {
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+// ─── PATCH /api/negocios/:id/asignar — Asignar a usuario ─
+
+router.patch("/:id/asignar", async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const { asignadoAId } = req.body;
+    const negocio = await prisma.negocio.update({
+      where: { id },
+      data: { asignadoAId: asignadoAId || null },
+    });
+    res.json(negocio);
+  } catch (err) {
+    res.status(400).json({ error: String(err) });
   }
 });
 

@@ -117,6 +117,40 @@ router.patch("/users/:id", requireAuth, requireAdmin, async (req: Request, res: 
   res.json(user);
 });
 
+// ─── Cambiar contraseña ─────────────────────────────────
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(6),
+});
+
+router.patch("/me/password", requireAuth, async (req: Request, res: Response) => {
+  if (!req.user) {
+    res.status(401).json({ error: "No autenticado" });
+    return;
+  }
+  const parsed = changePasswordSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Contraseña actual y nueva (mín 6 chars) requeridas" });
+    return;
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
+  if (!user) {
+    res.status(404).json({ error: "Usuario no encontrado" });
+    return;
+  }
+
+  const valid = await bcrypt.compare(parsed.data.currentPassword, user.password);
+  if (!valid) {
+    res.status(401).json({ error: "Contraseña actual incorrecta" });
+    return;
+  }
+
+  const hash = await bcrypt.hash(parsed.data.newPassword, 12);
+  await prisma.user.update({ where: { id: user.id }, data: { password: hash } });
+  res.json({ message: "Contraseña actualizada" });
+});
+
 // ─── Seed inicial (crea admin si no existe) ─────────────
 router.post("/seed", async (_req: Request, res: Response) => {
   const count = await prisma.user.count();

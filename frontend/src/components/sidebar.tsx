@@ -22,9 +22,13 @@ import {
   MessageSquareText,
   Bell,
   LogOut,
+  FileText,
+  Settings,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getNotificaciones } from "@/lib/api";
+import { getNotificaciones, marcarNotificacionLeida, marcarTodasLeidas, type Notificacion } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -34,8 +38,11 @@ const NAV_ITEMS = [
   { href: "/pipeline", label: "Pipeline CRM", icon: GitBranch },
   { href: "/mapa", label: "Mapa", icon: MapPin },
   { href: "/plantillas", label: "Plantillas", icon: MessageSquareText },
+  { href: "/propuestas", label: "Propuestas", icon: FileText },
+  { href: "/automatizaciones", label: "Automatizaciones", icon: Zap },
   { href: "/estadisticas", label: "Estadísticas", icon: BarChart3 },
   { href: "/export", label: "Exportar", icon: Download },
+  { href: "/config", label: "Configuración", icon: Settings },
 ];
 
 const SidebarCtx = createContext({ collapsed: false, toggle: () => {}, mobileOpen: false, setMobileOpen: (_v: boolean) => {} });
@@ -139,27 +146,33 @@ export function Sidebar() {
 }
 
 function SidebarInner({ collapsed, toggle, pathname }: { collapsed: boolean; toggle: () => void; pathname: string }) {
+  const router = useRouter();
   const [noLeidas, setNoLeidas] = useState(0);
+  const [notifList, setNotifList] = useState<Notificacion[]>([]);
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+
+  const fetchNotifs = () => {
+    getNotificaciones()
+      .then((data) => {
+        setNoLeidas(data.noLeidas ?? 0);
+        setNotifList(data.notificaciones?.slice(0, 5) ?? []);
+      })
+      .catch(() => {});
+  };
 
   useEffect(() => {
-    getNotificaciones()
-      .then((data) => setNoLeidas(data.noLeidas ?? 0))
-      .catch(() => {});
-    const interval = setInterval(() => {
-      getNotificaciones()
-        .then((data) => setNoLeidas(data.noLeidas ?? 0))
-        .catch(() => {});
-    }, 60000);
+    fetchNotifs();
+    const interval = setInterval(fetchNotifs, 60000);
     return () => clearInterval(interval);
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.removeItem("botpurocode_token");
+    localStorage.removeItem("botpurocode_user");
     window.location.href = "/login";
   };
 
-  const isLoggedIn = typeof window !== "undefined" && !!localStorage.getItem("token");
+  const isLoggedIn = typeof window !== "undefined" && !!localStorage.getItem("botpurocode_token");
 
   return (
     <div className="flex h-full flex-col">
@@ -215,25 +228,71 @@ function SidebarInner({ collapsed, toggle, pathname }: { collapsed: boolean; tog
 
       {/* Bottom: notifications, theme, logout */}
       <div className="border-t border-border p-2 space-y-1">
-        {/* Notification bell */}
-        <Link
-          href="/leads"
-          title={collapsed ? `Notificaciones (${noLeidas})` : undefined}
-          className={cn(
-            "relative flex items-center rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
-            collapsed ? "justify-center" : "gap-3"
-          )}
-        >
-          <div className="relative">
-            <Bell className="h-4 w-4 shrink-0" />
-            {noLeidas > 0 && (
-              <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                {noLeidas > 9 ? "9+" : noLeidas}
-              </span>
+        {/* Notification bell + dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setShowNotifDropdown((v) => !v)}
+            title={collapsed ? `Notificaciones (${noLeidas})` : undefined}
+            className={cn(
+              "relative flex w-full items-center rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+              collapsed ? "justify-center" : "gap-3"
             )}
-          </div>
-          {!collapsed && "Notificaciones"}
-        </Link>
+          >
+            <div className="relative">
+              <Bell className="h-4 w-4 shrink-0" />
+              {noLeidas > 0 && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                  {noLeidas > 9 ? "9+" : noLeidas}
+                </span>
+              )}
+            </div>
+            {!collapsed && "Notificaciones"}
+          </button>
+          {showNotifDropdown && (
+            <div className={cn(
+              "absolute bottom-full mb-2 w-72 rounded-xl border border-border bg-card shadow-lg z-50",
+              collapsed ? "left-full ml-2" : "left-0"
+            )}>
+              <div className="flex items-center justify-between border-b border-border px-3 py-2">
+                <span className="text-xs font-semibold text-foreground">Notificaciones</span>
+                {noLeidas > 0 && (
+                  <button onClick={() => { marcarTodasLeidas().then(fetchNotifs); }} className="text-[10px] text-primary hover:underline">Leer todas</button>
+                )}
+              </div>
+              <div className="max-h-60 overflow-y-auto">
+                {notifList.length === 0 ? (
+                  <p className="p-3 text-center text-xs text-muted-foreground">Sin notificaciones</p>
+                ) : (
+                  notifList.map((n) => (
+                    <button
+                      key={n.id}
+                      onClick={() => {
+                        if (!n.leida) marcarNotificacionLeida(n.id).then(fetchNotifs);
+                        setShowNotifDropdown(false);
+                      }}
+                      className={cn(
+                        "w-full text-left px-3 py-2 text-xs hover:bg-muted transition-colors border-b border-border last:border-0",
+                        !n.leida && "bg-primary/5"
+                      )}
+                    >
+                      <div className="flex items-center gap-1">
+                        <span className={cn("font-medium", n.leida ? "text-foreground" : "text-primary")}>{n.titulo}</span>
+                        {!n.leida && <div className="h-1.5 w-1.5 rounded-full bg-primary" />}
+                      </div>
+                      <p className="text-muted-foreground truncate">{n.mensaje}</p>
+                    </button>
+                  ))
+                )}
+              </div>
+              <button
+                onClick={() => { setShowNotifDropdown(false); router.push("/notificaciones"); }}
+                className="w-full border-t border-border px-3 py-2 text-center text-xs text-primary hover:bg-muted"
+              >
+                Ver todas
+              </button>
+            </div>
+          )}
+        </div>
         <ThemeToggle collapsed={collapsed} />
         {isLoggedIn && (
           <button
