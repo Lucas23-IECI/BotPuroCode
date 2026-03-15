@@ -6,6 +6,7 @@
 import { Router, type Request, type Response } from "express";
 import { prisma } from "../lib/prisma";
 import { requireAuth } from "../middleware/auth";
+import { logActivity } from "../lib/activity-logger";
 
 const router = Router();
 router.use(requireAuth);
@@ -37,6 +38,17 @@ router.post("/", async (req: Request, res: Response) => {
         accionConfig: accionConfig ? JSON.stringify(accionConfig) : "{}",
       },
     });
+
+    if (req.user) {
+      logActivity({
+        userId: req.user.userId,
+        accion: "CREATE_AUTOMATIZACION",
+        entidad: "Automatizacion",
+        entidadId: item.id,
+        detalle: `Automatización creada: ${nombre}`,
+      });
+    }
+
     res.status(201).json(item);
   } catch (err) {
     res.status(500).json({ error: String(err) });
@@ -56,6 +68,17 @@ router.patch("/:id", async (req: Request, res: Response) => {
     if (req.body.accionConfig !== undefined) data.accionConfig = JSON.stringify(req.body.accionConfig);
 
     const item = await prisma.automatizacion.update({ where: { id }, data });
+
+    if (req.user) {
+      logActivity({
+        userId: req.user.userId,
+        accion: "UPDATE_AUTOMATIZACION",
+        entidad: "Automatizacion",
+        entidadId: id,
+        detalle: `Automatización actualizada: ${item.nombre}`,
+      });
+    }
+
     res.json(item);
   } catch (err) {
     res.status(500).json({ error: String(err) });
@@ -65,7 +88,20 @@ router.patch("/:id", async (req: Request, res: Response) => {
 // DELETE /:id
 router.delete("/:id", async (req: Request, res: Response) => {
   try {
-    await prisma.automatizacion.delete({ where: { id: req.params.id as string } });
+    const id = req.params.id as string;
+    const item = await prisma.automatizacion.findUnique({ where: { id }, select: { nombre: true } });
+    await prisma.automatizacion.delete({ where: { id } });
+
+    if (req.user) {
+      logActivity({
+        userId: req.user.userId,
+        accion: "DELETE_AUTOMATIZACION",
+        entidad: "Automatizacion",
+        entidadId: id,
+        detalle: `Automatización eliminada: ${item?.nombre}`,
+      });
+    }
+
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: String(err) });

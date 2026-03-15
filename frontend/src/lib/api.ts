@@ -294,6 +294,12 @@ export interface User {
   rol: string;
   activo?: boolean;
   createdAt?: string;
+  cargo?: string | null;
+  bio?: string | null;
+  telefono?: string | null;
+  avatarBase64?: string | null;
+  mustChangePassword?: boolean;
+  lastLoginAt?: string | null;
 }
 
 export interface LoginResponse {
@@ -331,7 +337,7 @@ export function updateUser(id: string, data: Partial<User>) {
 }
 
 export function seedAdmin() {
-  return request<{ message: string; user: User }>("/auth/seed", { method: "POST" });
+  return request<{ message: string; users: User[] }>("/auth/seed", { method: "POST" });
 }
 
 // ─── Plantillas ──────────────────────────────────────────
@@ -509,4 +515,60 @@ export function updateAutomatizacion(id: string, data: Partial<{
 
 export function deleteAutomatizacion(id: string) {
   return request("/automatizaciones/" + id, { method: "DELETE" });
+}
+
+// ─── Perfil ────────────────────────────────────────
+
+export function updateProfile(data: {
+  nombre?: string;
+  cargo?: string | null;
+  bio?: string | null;
+  telefono?: string | null;
+  avatarBase64?: string | null;
+}) {
+  return request<User>("/auth/me/profile", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export function getUserProfile(id: string) {
+  return request<User>(`/auth/users/${id}`);
+}
+
+// ─── Actividad ─────────────────────────────────────
+
+export interface ActivityLog {
+  id: string;
+  createdAt: string;
+  userId: string;
+  accion: string;
+  entidad: string | null;
+  entidadId: string | null;
+  detalle: string | null;
+  metadata: string | null;
+  user: { id: string; nombre: string; avatarBase64: string | null };
+}
+
+export interface ActivityStats {
+  user: { id: string; nombre: string; avatarBase64: string | null };
+  total: number;
+  thisWeek: number;
+  byAction: Array<{ accion: string; count: number }>;
+}
+
+export function getActivity(params: { userId?: string; accion?: string; limit?: number; offset?: number } = {}) {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v !== undefined) qs.set(k, String(v));
+  }
+  return request<{ items: ActivityLog[]; total: number }>(`/activity?${qs}`);
+}
+
+export function getActivityStats() {
+  return request<ActivityStats[]>("/activity/stats");
+}
+
+export function getActivityHeatmap(userId: string, days = 365) {
+  return request<Record<string, number>>(`/activity/heatmap/${userId}?days=${days}`);
 }

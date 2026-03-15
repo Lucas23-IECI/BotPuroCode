@@ -3,8 +3,11 @@ import { prisma } from "../lib/prisma";
 import { buscarEnOSM, getZonasDisponibles, getRubrosOSM } from "../services/osm.service";
 import { checkPresencia } from "../services/presencia.service";
 import { calcularScore } from "../services/scoring.service";
+import { requireAuth } from "../middleware/auth";
+import { logActivity } from "../lib/activity-logger";
 
 const router = Router();
+router.use(requireAuth);
 
 // ─── GET /api/osm/zonas — Available zones ────────────────
 
@@ -80,6 +83,16 @@ router.post("/buscar", async (req: Request, res: Response) => {
       creados,
       duplicados,
     });
+
+    if (req.user) {
+      logActivity({
+        userId: req.user.userId,
+        accion: "IMPORT_OSM",
+        entidad: "Negocio",
+        detalle: `Búsqueda OSM: ${rubro} en ${comuna} (${creados} creados, ${duplicados} duplicados)`,
+        metadata: { rubro, comuna, creados, duplicados },
+      });
+    }
   } catch (err) {
     res.status(500).json({ error: String(err) });
   }

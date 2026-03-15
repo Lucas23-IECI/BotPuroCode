@@ -13,6 +13,7 @@ import { calcularCalidadDatos } from "../services/calidad-datos.service";
 import { enriquecerConGooglePlaces } from "../services/google-places.service";
 import { evaluarAutomatizaciones } from "../services/automatizaciones.service";
 import { requireAuth } from "../middleware/auth";
+import { logActivity } from "../lib/activity-logger";
 
 const router = Router();
 router.use(requireAuth);
@@ -177,6 +178,16 @@ router.post("/", async (req: Request, res: Response) => {
     // Trigger automations for new lead
     evaluarAutomatizaciones({ trigger: "NUEVO_LEAD", negocioId: negocio.id }).catch(console.error);
 
+    if (req.user) {
+      logActivity({
+        userId: req.user.userId,
+        accion: "CREATE_NEGOCIO",
+        entidad: "Negocio",
+        entidadId: negocio.id,
+        detalle: `Lead creado: ${negocio.nombre}`,
+      });
+    }
+
     res.status(201).json(negocio);
   } catch (err) {
     res.status(400).json({ error: String(err) });
@@ -208,6 +219,17 @@ router.patch("/:id", async (req: Request, res: Response) => {
         estadoAnterior: prev.estadoContacto,
         estadoNuevo: bodyEstado,
       }).catch(console.error);
+    }
+
+    if (req.user) {
+      logActivity({
+        userId: req.user.userId,
+        accion: "UPDATE_NEGOCIO",
+        entidad: "Negocio",
+        entidadId: negocio.id,
+        detalle: `Lead actualizado: ${negocio.nombre}`,
+        metadata: bodyEstado ? { estadoNuevo: bodyEstado } : undefined,
+      });
     }
 
     res.json(negocio);
@@ -281,6 +303,16 @@ router.post("/csv", upload.single("file"), async (req: Request, res: Response) =
       errores: result.errores,
       total: result.total,
     });
+
+    if (req.user) {
+      logActivity({
+        userId: req.user.userId,
+        accion: "IMPORT_CSV",
+        entidad: "Negocio",
+        detalle: `Importación CSV: ${creados} creados, ${duplicados} duplicados`,
+        metadata: { creados, duplicados, total: result.total },
+      });
+    }
   } catch (err) {
     res.status(500).json({ error: String(err) });
   }
@@ -317,6 +349,18 @@ router.patch("/:id/asignar", async (req: Request, res: Response) => {
       where: { id },
       data: { asignadoAId: asignadoAId || null },
     });
+
+    if (req.user) {
+      logActivity({
+        userId: req.user.userId,
+        accion: "ASSIGN_NEGOCIO",
+        entidad: "Negocio",
+        entidadId: id,
+        detalle: `Lead asignado: ${negocio.nombre}`,
+        metadata: { asignadoAId },
+      });
+    }
+
     res.json(negocio);
   } catch (err) {
     res.status(400).json({ error: String(err) });

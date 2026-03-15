@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { requireAuth } from "../middleware/auth";
+import { logActivity } from "../lib/activity-logger";
 import { z } from "zod";
 import PDFDocument from "pdfkit";
 
@@ -61,6 +62,17 @@ router.post("/", requireAuth, async (req: Request, res: Response) => {
     },
   });
 
+  if (req.user) {
+    logActivity({
+      userId: req.user.userId,
+      accion: "CREATE_PROPUESTA",
+      entidad: "Propuesta",
+      entidadId: propuesta.id,
+      detalle: `Propuesta creada para ${negocio.nombre}: ${precioInfo.label}`,
+      metadata: { tipoServicio, precioFinal },
+    });
+  }
+
   res.status(201).json(propuesta);
 });
 
@@ -81,6 +93,17 @@ router.patch("/:id", requireAuth, async (req: Request, res: Response) => {
     where: { id: req.params.id as string },
     data: { estado },
   });
+
+  if (req.user) {
+    logActivity({
+      userId: req.user.userId,
+      accion: "UPDATE_PROPUESTA",
+      entidad: "Propuesta",
+      entidadId: propuesta.id,
+      detalle: `Estado propuesta: ${estado}`,
+    });
+  }
+
   res.json(propuesta);
 });
 

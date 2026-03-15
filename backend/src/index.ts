@@ -11,6 +11,7 @@ import plantillasRouter from "./routes/plantillas";
 import propuestasRouter from "./routes/propuestas";
 import notificacionesRouter from "./routes/notificaciones";
 import automatizacionesRouter from "./routes/automatizaciones";
+import activityRouter from "./routes/activity";
 import { iniciarCronJobs } from "./cron/jobs";
 
 const app = express();
@@ -22,7 +23,7 @@ const allowedOrigins = frontendUrl
   : ["http://localhost:3000"];
 
 app.use(cors({ origin: allowedOrigins }));
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 
 // ─── Routes ──────────────────────────────────────────────
 
@@ -36,6 +37,7 @@ app.use("/api/plantillas", plantillasRouter);
 app.use("/api/propuestas", propuestasRouter);
 app.use("/api/notificaciones", notificacionesRouter);
 app.use("/api/automatizaciones", automatizacionesRouter);
+app.use("/api/activity", activityRouter);
 
 // ─── Health ──────────────────────────────────────────────
 

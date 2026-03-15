@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import { prisma } from "../lib/prisma";
 import { signToken, requireAuth, requireAdmin } from "../middleware/auth";
+import { logActivity } from "../lib/activity-logger";
 import { z } from "zod";
 
 const router = Router();
@@ -33,6 +34,14 @@ router.post("/login", async (req: Request, res: Response) => {
     return;
   }
 
+  // Update lastLoginAt
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { lastLoginAt: new Date() },
+  });
+
+  logActivity({ userId: user.id, accion: "LOGIN", detalle: `Inicio de sesión: ${user.email}` });
+
   const token = signToken({ userId: user.id, email: user.email, rol: user.rol });
 
   res.json({
@@ -42,6 +51,11 @@ router.post("/login", async (req: Request, res: Response) => {
       email: user.email,
       nombre: user.nombre,
       rol: user.rol,
+      cargo: user.cargo,
+      bio: user.bio,
+      telefono: user.telefono,
+      avatarBase64: user.avatarBase64,
+      mustChangePassword: user.mustChangePassword,
     },
   });
 });
@@ -86,7 +100,11 @@ router.get("/me", requireAuth, async (req: Request, res: Response) => {
   }
   const user = await prisma.user.findUnique({
     where: { id: req.user.userId },
-    select: { id: true, email: true, nombre: true, rol: true, createdAt: true },
+    select: {
+      id: true, email: true, nombre: true, rol: true, createdAt: true,
+      cargo: true, bio: true, telefono: true, avatarBase64: true,
+      mustChangePassword: true, lastLoginAt: true,
+    },
   });
   res.json(user);
 });
@@ -94,10 +112,29 @@ router.get("/me", requireAuth, async (req: Request, res: Response) => {
 // ─── Listar usuarios (admin) ────────────────────────────
 router.get("/users", requireAuth, requireAdmin, async (_req: Request, res: Response) => {
   const users = await prisma.user.findMany({
-    select: { id: true, email: true, nombre: true, rol: true, activo: true, createdAt: true },
+    select: {
+      id: true, email: true, nombre: true, rol: true, activo: true, createdAt: true,
+      cargo: true, bio: true, telefono: true, avatarBase64: true, lastLoginAt: true,
+    },
     orderBy: { createdAt: "asc" },
   });
   res.json(users);
+});
+
+// ─── Ver perfil de otro usuario ─────────────────────────
+router.get("/users/:id", requireAuth, async (req: Request, res: Response) => {
+  const user = await prisma.user.findUnique({
+    where: { id: req.params.id as string },
+    select: {
+      id: true, email: true, nombre: true, rol: true, createdAt: true,
+      cargo: true, bio: true, telefono: true, avatarBase64: true, lastLoginAt: true,
+    },
+  });
+  if (!user) {
+    res.status(404).json({ error: "Usuario no encontrado" });
+    return;
+  }
+  res.json(user);
 });
 
 // ─── Actualizar usuario (admin) ──────────────────────────
@@ -147,11 +184,60 @@ router.patch("/me/password", requireAuth, async (req: Request, res: Response) =>
   }
 
   const hash = await bcrypt.hash(parsed.data.newPassword, 12);
-  await prisma.user.update({ where: { id: user.id }, data: { password: hash } });
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { password: hash, mustChangePassword: false },
+  });
+
+  logActivity({ userId: user.id, accion: "CHANGE_PASSWORD", detalle: "Contraseña actualizada" });
+
   res.json({ message: "Contraseña actualizada" });
 });
 
-// ─── Seed inicial (crea admin si no existe) ─────────────
+// ─── Actualizar perfil propio ───────────────────────────
+const updateProfileSchema = z.object({
+  nombre: z.string().min(1).optional(),
+  cargo: z.string().max(100).optional().nullable(),
+  bio: z.string().max(500).optional().nullable(),
+  telefono: z.string().max(20).optional().nullable(),
+  avatarBase64: z.string().optional().nullable(),
+});
+
+router.patch("/me/profile", requireAuth, async (req: Request, res: Response) => {
+  if (!req.user) {
+    res.status(401).json({ error: "No autenticado" });
+    return;
+  }
+  const parsed = updateProfileSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Datos inválidos", details: parsed.error.flatten() });
+    return;
+  }
+
+  const data: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(parsed.data)) {
+    if (value !== undefined) data[key] = value;
+  }
+
+  const user = await prisma.user.update({
+    where: { id: req.user.userId },
+    data,
+    select: {
+      id: true, email: true, nombre: true, rol: true,
+      cargo: true, bio: true, telefono: true, avatarBase64: true,
+    },
+  });
+
+  logActivity({
+    userId: req.user.userId,
+    accion: "UPDATE_PROFILE",
+    detalle: `Perfil actualizado: ${Object.keys(data).join(", ")}`,
+  });
+
+  res.json(user);
+});
+
+// ─── Seed inicial (crea 2 admins si no existen) ─────────
 router.post("/seed", async (_req: Request, res: Response) => {
   const count = await prisma.user.count();
   if (count > 0) {
@@ -159,18 +245,34 @@ router.post("/seed", async (_req: Request, res: Response) => {
     return;
   }
 
-  const hash = await bcrypt.hash("admin123", 12);
-  const admin = await prisma.user.create({
-    data: {
-      email: "contactopurocode@purocode.com",
-      nombre: "Lucas (Admin)",
-      password: hash,
-      rol: "ADMIN",
-    },
-    select: { id: true, email: true, nombre: true, rol: true },
-  });
+  const hash = await bcrypt.hash("changeme123", 12);
 
-  res.status(201).json({ message: "Admin creado", user: admin });
+  const [lucas, diego] = await prisma.$transaction([
+    prisma.user.create({
+      data: {
+        email: "lucas.mendez@purocode.com",
+        nombre: "Lucas Méndez",
+        password: hash,
+        rol: "ADMIN",
+        cargo: "Co-Fundador & Dev Lead",
+        mustChangePassword: true,
+      },
+      select: { id: true, email: true, nombre: true, rol: true },
+    }),
+    prisma.user.create({
+      data: {
+        email: "diego.guzman@purocode.com",
+        nombre: "Diego Guzmán",
+        password: hash,
+        rol: "ADMIN",
+        cargo: "Co-Fundador & Estrategia",
+        mustChangePassword: true,
+      },
+      select: { id: true, email: true, nombre: true, rol: true },
+    }),
+  ]);
+
+  res.status(201).json({ message: "Equipo creado", users: [lucas, diego] });
 });
 
 export default router;

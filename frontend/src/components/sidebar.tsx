@@ -25,6 +25,8 @@ import {
   FileText,
   Settings,
   Zap,
+  UserCircle,
+  Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getNotificaciones, marcarNotificacionLeida, marcarTodasLeidas, type Notificacion } from "@/lib/api";
@@ -55,6 +57,8 @@ const NAV_SECTIONS = [
     label: "Sistema",
     items: [
       { href: "/export", label: "Exportar", icon: Download },
+      { href: "/actividad", label: "Actividad", icon: Activity },
+      { href: "/perfil", label: "Mi Perfil", icon: UserCircle },
       { href: "/config", label: "Configuración", icon: Settings },
     ],
   },
@@ -218,6 +222,41 @@ function SidebarInner({ collapsed, toggle, pathname }: { collapsed: boolean; tog
 
       {/* Navigation */}
       <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-2">
+        {/* User mini-profile */}
+        {(() => {
+          let currentUser: { nombre?: string; avatarBase64?: string; cargo?: string } | null = null;
+          try {
+            const stored = typeof window !== "undefined" ? localStorage.getItem("botpurocode_user") : null;
+            if (stored) currentUser = JSON.parse(stored);
+          } catch {}
+          if (!currentUser) return null;
+          const initials = currentUser.nombre
+            ? currentUser.nombre.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+            : "U";
+          return (
+            <Link
+              href="/perfil"
+              className={cn(
+                "flex items-center rounded-xl px-2 py-2 mb-2 transition-all hover:bg-accent/50",
+                collapsed ? "justify-center" : "gap-2.5"
+              )}
+            >
+              {currentUser.avatarBase64 ? (
+                <img src={currentUser.avatarBase64} alt="" className="h-8 w-8 rounded-lg object-cover shrink-0" />
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 text-white text-xs font-bold shrink-0 shadow-sm">
+                  {initials}
+                </div>
+              )}
+              {!collapsed && (
+                <div className="overflow-hidden">
+                  <p className="text-xs font-semibold text-foreground truncate">{currentUser.nombre}</p>
+                  {currentUser.cargo && <p className="text-[10px] text-muted-foreground truncate">{currentUser.cargo}</p>}
+                </div>
+              )}
+            </Link>
+          );
+        })()}
         {NAV_SECTIONS.map((section, si) => (
           <div key={section.label}>
             {!collapsed && si > 0 && (

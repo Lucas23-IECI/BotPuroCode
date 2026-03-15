@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { requireAuth } from "../middleware/auth";
+import { logActivity } from "../lib/activity-logger";
 import { z } from "zod";
 
 const router = Router();
@@ -36,6 +37,17 @@ router.post("/", requireAuth, async (req: Request, res: Response) => {
   }
 
   const plantilla = await prisma.plantilla.create({ data: parsed.data });
+
+  if (req.user) {
+    logActivity({
+      userId: req.user.userId,
+      accion: "CREATE_PLANTILLA",
+      entidad: "Plantilla",
+      entidadId: plantilla.id,
+      detalle: `Plantilla creada: ${plantilla.nombre}`,
+    });
+  }
+
   res.status(201).json(plantilla);
 });
 
@@ -59,7 +71,20 @@ router.patch("/:id", requireAuth, async (req: Request, res: Response) => {
 
 // ─── Eliminar plantilla ─────────────────────────────────
 router.delete("/:id", requireAuth, async (req: Request, res: Response) => {
-  await prisma.plantilla.delete({ where: { id: req.params.id as string } });
+  const id = req.params.id as string;
+  const plantilla = await prisma.plantilla.findUnique({ where: { id }, select: { nombre: true } });
+  await prisma.plantilla.delete({ where: { id } });
+
+  if (req.user) {
+    logActivity({
+      userId: req.user.userId,
+      accion: "DELETE_PLANTILLA",
+      entidad: "Plantilla",
+      entidadId: id,
+      detalle: `Plantilla eliminada: ${plantilla?.nombre}`,
+    });
+  }
+
   res.json({ ok: true });
 });
 

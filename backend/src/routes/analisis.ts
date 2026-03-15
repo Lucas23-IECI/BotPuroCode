@@ -5,8 +5,10 @@ import { checkPresencia } from "../services/presencia.service";
 import { analizarSitio } from "../services/analisis.service";
 import { checkPageSpeed } from "../services/pagespeed.service";
 import { calcularScore } from "../services/scoring.service";
+import { requireAuth } from "../middleware/auth";
 
 const router = Router();
+router.use(requireAuth);
 
 // ─── POST /api/analisis/:negocioId — Trigger full analysis ─
 

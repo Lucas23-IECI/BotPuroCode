@@ -101,10 +101,37 @@ model User {
   rol      Rol    @default(VENDEDOR)
   activo   Boolean @default(true)
 
+  // Perfil extendido
+  cargo            String?
+  bio              String?
+  telefono         String?
+  avatarBase64     String?  @db.Text
+  mustChangePassword Boolean @default(false)
+  lastLoginAt      DateTime?
+
   negociosAsignados Negocio[]      @relation("AsignadoA")
   contactosCreados  Contacto[]     @relation("ContactoCreadoPor")
   propuestas        Propuesta[]
   notificaciones    Notificacion[]
+  activityLogs      ActivityLog[]
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  accion    String   // LOGIN, CREATE_NEGOCIO, UPDATE_NEGOCIO, etc.
+  entidad   String?  // Negocio, Contacto, Propuesta, etc.
+  entidadId String?
+  detalle   String?
+  metadata  String?  // JSON string for extra data
+
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+  @@index([accion])
 }
 
 model Negocio {

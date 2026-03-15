@@ -1,8 +1,11 @@
 import { Router, type Request, type Response } from "express";
 import { prisma } from "../lib/prisma";
 import { contactoCreateSchema } from "../types/schemas";
+import { requireAuth } from "../middleware/auth";
+import { logActivity } from "../lib/activity-logger";
 
 const router = Router();
+router.use(requireAuth);
 
 // ─── POST /api/crm/contacto — Registrar contacto ────────
 
@@ -46,6 +49,17 @@ router.post("/contacto", async (req: Request, res: Response) => {
     });
 
     res.status(201).json(contacto);
+
+    if (req.user) {
+      logActivity({
+        userId: req.user.userId,
+        accion: "CREATE_CONTACTO",
+        entidad: "Contacto",
+        entidadId: contacto.id,
+        detalle: `Contacto registrado para negocio ${data.negocioId}`,
+        metadata: { resultado: data.resultado },
+      });
+    }
   } catch (err) {
     res.status(400).json({ error: String(err) });
   }
@@ -70,6 +84,16 @@ router.patch("/negocio/:id/estado", async (req: Request, res: Response) => {
       where: { id: req.params.id as string },
       data: updateData,
     });
+
+    if (req.user) {
+      logActivity({
+        userId: req.user.userId,
+        accion: "UPDATE_ESTADO",
+        entidad: "Negocio",
+        entidadId: negocio.id,
+        detalle: `Estado cambiado a ${estadoContacto || "sin cambio"}`,
+      });
+    }
 
     res.json(negocio);
   } catch (err) {

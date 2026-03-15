@@ -21,7 +21,7 @@ export default function LoginPage() {
       const resp = await login(email, password);
       localStorage.setItem("botpurocode_token", resp.token);
       localStorage.setItem("botpurocode_user", JSON.stringify(resp.user));
-      router.push("/");
+      router.push(resp.user.mustChangePassword ? "/perfil" : "/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al iniciar sesión");
     } finally {
