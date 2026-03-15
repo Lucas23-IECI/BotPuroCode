@@ -5,6 +5,7 @@ import {
   getUsers,
   registerUser,
   updateUser,
+  adminResetPassword,
   seedPlantillas,
   seedAdmin,
   type User,
@@ -20,6 +21,9 @@ import {
   Eye,
   EyeOff,
   Database,
+  KeyRound,
+  Copy,
+  Check,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -37,6 +41,15 @@ export default function ConfigPage() {
   const [newRol, setNewRol] = useState<"ADMIN" | "VENDEDOR">("VENDEDOR");
   const [showNewPw, setShowNewPw] = useState(false);
   const [creating, setCreating] = useState(false);
+
+  // Reset password modal
+  const [resetTarget, setResetTarget] = useState<User | null>(null);
+  const [resetMode, setResetMode] = useState<"auto" | "manual">("auto");
+  const [resetManualPw, setResetManualPw] = useState("");
+  const [showResetPw, setShowResetPw] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [tempPassword, setTempPassword] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const loadUsers = () => getUsers().then(setUsers).catch(() => {});
 
@@ -74,6 +87,42 @@ export default function ConfigPage() {
     } catch {
       toast("Error al actualizar usuario", "error");
     }
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetTarget) return;
+    if (resetMode === "manual" && resetManualPw.length < 6) {
+      toast("La contraseña debe tener al menos 6 caracteres", "error");
+      return;
+    }
+    setResetting(true);
+    try {
+      const res = await adminResetPassword(
+        resetTarget.id,
+        resetMode === "manual" ? resetManualPw : undefined
+      );
+      setTempPassword(res.tempPassword);
+      toast("Contraseña restablecida", "success");
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Error al restablecer", "error");
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const closeResetModal = () => {
+    setResetTarget(null);
+    setResetMode("auto");
+    setResetManualPw("");
+    setShowResetPw(false);
+    setTempPassword("");
+    setCopied(false);
+  };
+
+  const copyTempPassword = () => {
+    navigator.clipboard.writeText(tempPassword);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleToggleRole = async (u: User) => {
@@ -236,6 +285,13 @@ export default function ConfigPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <button
+                      onClick={() => setResetTarget(u)}
+                      title="Restablecer contraseña"
+                      className="rounded-lg p-1.5 text-amber-400 transition-colors hover:bg-amber-500/10"
+                    >
+                      <KeyRound className="h-4 w-4" />
+                    </button>
+                    <button
                       onClick={() => handleToggleRole(u)}
                       title={`Cambiar rol (actual: ${u.rol})`}
                       className={`flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors ${
@@ -305,6 +361,119 @@ export default function ConfigPage() {
           </div>
         </div>
       </div>
+
+      {/* Reset password modal */}
+      {resetTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-md rounded-2xl border border-border/60 bg-card p-6 shadow-2xl space-y-4 animate-scale-in mx-4">
+            {tempPassword ? (
+              <>
+                <div className="text-center space-y-2">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-500/10">
+                    <Check className="h-6 w-6 text-green-500" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground">Contraseña Restablecida</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Nueva contraseña temporal para <span className="font-medium text-foreground">{resetTarget.nombre}</span>
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-muted/20 p-3">
+                  <code className="flex-1 text-sm font-mono text-foreground break-all">{tempPassword}</code>
+                  <button
+                    onClick={copyTempPassword}
+                    className="shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+                    title="Copiar"
+                  >
+                    {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  </button>
+                </div>
+                <p className="text-xs text-amber-400">
+                  El usuario deberá cambiar esta contraseña en su próximo inicio de sesión.
+                </p>
+                <button
+                  onClick={closeResetModal}
+                  className="w-full rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 py-2.5 text-sm font-medium text-white shadow-md transition-all hover:brightness-110"
+                >
+                  Cerrar
+                </button>
+              </>
+            ) : (
+              <>
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Restablecer Contraseña</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Para <span className="font-medium text-foreground">{resetTarget.nombre}</span> ({resetTarget.email})
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 rounded-xl border border-border/60 p-3 cursor-pointer transition-colors hover:bg-accent/30">
+                    <input
+                      type="radio"
+                      name="resetMode"
+                      checked={resetMode === "auto"}
+                      onChange={() => setResetMode("auto")}
+                      className="accent-violet-500"
+                    />
+                    <div>
+                      <span className="text-sm font-medium text-foreground">Generar automáticamente</span>
+                      <p className="text-xs text-muted-foreground">Se generará una contraseña temporal segura</p>
+                    </div>
+                  </label>
+                  <label className="flex items-center gap-2 rounded-xl border border-border/60 p-3 cursor-pointer transition-colors hover:bg-accent/30">
+                    <input
+                      type="radio"
+                      name="resetMode"
+                      checked={resetMode === "manual"}
+                      onChange={() => setResetMode("manual")}
+                      className="accent-violet-500"
+                    />
+                    <div>
+                      <span className="text-sm font-medium text-foreground">Escribir manualmente</span>
+                      <p className="text-xs text-muted-foreground">Especifica la contraseña temporal</p>
+                    </div>
+                  </label>
+                </div>
+
+                {resetMode === "manual" && (
+                  <div className="relative animate-scale-in">
+                    <input
+                      type={showResetPw ? "text" : "password"}
+                      value={resetManualPw}
+                      onChange={(e) => setResetManualPw(e.target.value)}
+                      placeholder="Mín 6 caracteres"
+                      className="w-full rounded-xl border border-input bg-background px-3 py-2.5 pr-10 text-sm text-foreground"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowResetPw(!showResetPw)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showResetPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleResetPassword}
+                    disabled={resetting}
+                    className="flex-1 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 py-2.5 text-sm font-medium text-white shadow-md transition-all hover:brightness-110 disabled:opacity-50"
+                  >
+                    {resetting ? "Restableciendo…" : "Restablecer"}
+                  </button>
+                  <button
+                    onClick={closeResetModal}
+                    className="rounded-xl border border-border/60 px-4 py-2.5 text-sm text-muted-foreground hover:bg-accent/50 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

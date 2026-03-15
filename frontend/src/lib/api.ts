@@ -465,6 +465,27 @@ export function changePassword(currentPassword: string, newPassword: string) {
   });
 }
 
+export function forgotPassword(email: string) {
+  return request<{ message: string }>("/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export function resetPassword(token: string, newPassword: string) {
+  return request<{ message: string }>("/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ token, newPassword }),
+  });
+}
+
+export function adminResetPassword(userId: string, password?: string) {
+  return request<{ message: string; tempPassword: string }>(`/auth/admin-reset/${userId}`, {
+    method: "POST",
+    body: JSON.stringify(password ? { password } : {}),
+  });
+}
+
 export function deleteNotificacion(id: string) {
   return request("/notificaciones/" + id, { method: "DELETE" });
 }

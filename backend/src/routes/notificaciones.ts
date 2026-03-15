@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { requireAuth } from "../middleware/auth";
+import { logActivity } from "../lib/activity-logger";
 
 const router = Router();
 
@@ -24,6 +25,8 @@ router.get("/", requireAuth, async (req: Request, res: Response) => {
     }),
   ]);
 
+  logActivity({ userId, accion: "VIEW_NOTIFICACIONES", detalle: `${noLeidas} no leídas de ${notificaciones.length}` });
+
   res.json({ notificaciones, noLeidas });
 });
 
@@ -33,6 +36,9 @@ router.patch("/:id/leer", requireAuth, async (req: Request, res: Response) => {
     where: { id: req.params.id as string },
     data: { leida: true },
   });
+
+  logActivity({ userId: req.user!.userId, accion: "MARCAR_NOTIFICACION", entidadId: notif.id });
+
   res.json(notif);
 });
 
@@ -48,12 +54,19 @@ router.patch("/leer-todas", requireAuth, async (req: Request, res: Response) => 
     where: { userId: userId!, leida: false },
     data: { leida: true },
   });
+
+  logActivity({ userId: userId!, accion: "MARCAR_TODAS_NOTIFICACIONES", detalle: `${result.count} marcadas como leídas` });
+
   res.json({ count: result.count });
 });
 
 // ─── Eliminar notificación ──────────────────────────────
 router.delete("/:id", requireAuth, async (req: Request, res: Response) => {
-  await prisma.notificacion.delete({ where: { id: req.params.id as string } });
+  const id = req.params.id as string;
+  await prisma.notificacion.delete({ where: { id } });
+
+  logActivity({ userId: req.user!.userId, accion: "ELIMINAR_NOTIFICACION", entidadId: id });
+
   res.json({ ok: true });
 });
 

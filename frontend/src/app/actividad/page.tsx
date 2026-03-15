@@ -36,6 +36,20 @@ const ACTION_LABELS: Record<string, string> = {
   CREATE_AUTOMATIZACION: "Automatización creada",
   UPDATE_AUTOMATIZACION: "Automatización actualizada",
   DELETE_AUTOMATIZACION: "Automatización eliminada",
+  EXPORT_CSV: "Exportación CSV",
+  EXPORT_JSON: "Exportación JSON",
+  EXPORT_REPORT: "Reporte generado",
+  VIEW_NOTIFICACIONES: "Notificaciones vistas",
+  MARCAR_NOTIFICACION: "Notificación leída",
+  MARCAR_TODAS_NOTIFICACIONES: "Todas leídas",
+  ELIMINAR_NOTIFICACION: "Notificación eliminada",
+  TRIGGER_ANALISIS: "Análisis encolado",
+  TRIGGER_ANALISIS_BATCH: "Análisis batch",
+  VIEW_QUEUE: "Cola consultada",
+  REGISTER_USER: "Usuario creado",
+  UPDATE_USER: "Usuario actualizado",
+  RESET_PASSWORD: "Contraseña restablecida",
+  ADMIN_RESET_PASSWORD: "Reset por admin",
 };
 
 function actionLabel(a: string) {

@@ -1,11 +1,23 @@
 import { Router, Request, Response } from "express";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { prisma } from "../lib/prisma";
 import { signToken, requireAuth, requireAdmin } from "../middleware/auth";
 import { logActivity } from "../lib/activity-logger";
+import { enviarEmail } from "../services/notifications.service";
 import { z } from "zod";
+import rateLimit from "express-rate-limit";
 
 const router = Router();
+
+// Rate limiter: 10 intentos por IP cada 5 minutos
+const authLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Demasiados intentos. Intenta de nuevo en 5 minutos." },
+});
 
 // ─── Login ──────────────────────────────────────────────
 const loginSchema = z.object({
@@ -13,7 +25,7 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
-router.post("/login", async (req: Request, res: Response) => {
+router.post("/login", authLimiter, async (req: Request, res: Response) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Email y contraseña requeridos" });
@@ -68,7 +80,7 @@ const registerSchema = z.object({
   rol: z.enum(["ADMIN", "VENDEDOR"]).default("VENDEDOR"),
 });
 
-router.post("/register", requireAuth, requireAdmin, async (req: Request, res: Response) => {
+router.post("/register", authLimiter, requireAuth, requireAdmin, async (req: Request, res: Response) => {
   const parsed = registerSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Datos inválidos", details: parsed.error.flatten() });
@@ -87,6 +99,14 @@ router.post("/register", requireAuth, requireAdmin, async (req: Request, res: Re
   const user = await prisma.user.create({
     data: { email, nombre, password: hash, rol },
     select: { id: true, email: true, nombre: true, rol: true, createdAt: true },
+  });
+
+  logActivity({
+    userId: req.user!.userId,
+    accion: "REGISTER_USER",
+    entidad: "User",
+    entidadId: user.id,
+    detalle: `Usuario creado: ${email} (${rol})`,
   });
 
   res.status(201).json(user);
@@ -151,6 +171,19 @@ router.patch("/users/:id", requireAuth, requireAdmin, async (req: Request, res: 
     },
     select: { id: true, email: true, nombre: true, rol: true, activo: true },
   });
+
+  const changes: string[] = [];
+  if (rol !== undefined) changes.push(`rol→${rol}`);
+  if (activo !== undefined) changes.push(activo ? "activado" : "desactivado");
+  if (nombre !== undefined) changes.push(`nombre→${nombre}`);
+  logActivity({
+    userId: req.user!.userId,
+    accion: "UPDATE_USER",
+    entidad: "User",
+    entidadId: id,
+    detalle: `Usuario actualizado: ${changes.join(", ")}`,
+  });
+
   res.json(user);
 });
 
@@ -235,6 +268,137 @@ router.patch("/me/profile", requireAuth, async (req: Request, res: Response) => 
   });
 
   res.json(user);
+});
+
+// ─── Olvidé mi contraseña ────────────────────────────────
+router.post("/forgot-password", authLimiter, async (req: Request, res: Response) => {
+  const { email } = req.body as { email?: string };
+  if (!email) {
+    res.status(400).json({ error: "Email requerido" });
+    return;
+  }
+
+  // Always return success to prevent email enumeration
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user || !user.activo) {
+    res.json({ message: "Si el email existe, recibirás un enlace de recuperación." });
+    return;
+  }
+
+  // Invalidate previous unused tokens
+  await prisma.passwordResetToken.updateMany({
+    where: { userId: user.id, used: false },
+    data: { used: true },
+  });
+
+  const token = crypto.randomBytes(32).toString("hex");
+  await prisma.passwordResetToken.create({
+    data: {
+      token,
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30 min
+    },
+  });
+
+  const frontendUrl = process.env.FRONTEND_URL?.replace(/\/+$/, "") || "http://localhost:3000";
+  const resetUrl = `${frontendUrl}/reset-password?token=${token}`;
+
+  await enviarEmail({
+    to: user.email,
+    subject: "[BotPuroCode] Recuperación de contraseña",
+    text: `Hola ${user.nombre},\n\nRecibimos una solicitud para restablecer tu contraseña.\n\nHaz clic en el siguiente enlace (válido por 30 minutos):\n${resetUrl}\n\nSi no solicitaste esto, ignora este email.\n\n— Equipo PuroCode`,
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
+        <h2 style="color:#6d28d9">BotPuroCode</h2>
+        <p>Hola <strong>${user.nombre}</strong>,</p>
+        <p>Recibimos una solicitud para restablecer tu contraseña.</p>
+        <p><a href="${resetUrl}" style="display:inline-block;background:#6d28d9;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600">Restablecer contraseña</a></p>
+        <p style="color:#888;font-size:12px">Este enlace es válido por 30 minutos. Si no solicitaste esto, ignora este email.</p>
+      </div>
+    `,
+  });
+
+  res.json({ message: "Si el email existe, recibirás un enlace de recuperación." });
+});
+
+// ─── Restablecer contraseña con token ───────────────────
+router.post("/reset-password", authLimiter, async (req: Request, res: Response) => {
+  const schema = z.object({
+    token: z.string().min(1),
+    newPassword: z.string().min(6),
+  });
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Token y nueva contraseña (mín 6 chars) requeridos" });
+    return;
+  }
+
+  const { token, newPassword } = parsed.data;
+
+  const resetToken = await prisma.passwordResetToken.findUnique({ where: { token } });
+  if (!resetToken || resetToken.used || resetToken.expiresAt < new Date()) {
+    res.status(400).json({ error: "Token inválido o expirado" });
+    return;
+  }
+
+  const hash = await bcrypt.hash(newPassword, 12);
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: resetToken.userId },
+      data: { password: hash, mustChangePassword: false },
+    }),
+    prisma.passwordResetToken.update({
+      where: { id: resetToken.id },
+      data: { used: true },
+    }),
+  ]);
+
+  logActivity({
+    userId: resetToken.userId,
+    accion: "RESET_PASSWORD",
+    detalle: "Contraseña restablecida via email",
+  });
+
+  res.json({ message: "Contraseña actualizada. Ya puedes iniciar sesión." });
+});
+
+// ─── Admin: resetear contraseña de otro usuario ─────────
+const adminResetSchema = z.object({
+  password: z.string().min(6).optional(),
+});
+
+router.post("/admin-reset/:userId", requireAuth, requireAdmin, async (req: Request, res: Response) => {
+  const parsed = adminResetSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Contraseña mínimo 6 caracteres" });
+    return;
+  }
+
+  const targetId = req.params.userId as string;
+  const target = await prisma.user.findUnique({ where: { id: targetId } });
+  if (!target) {
+    res.status(404).json({ error: "Usuario no encontrado" });
+    return;
+  }
+
+  // If no password provided, auto-generate
+  const tempPassword = parsed.data?.password || crypto.randomBytes(6).toString("base64url").slice(0, 12);
+  const hash = await bcrypt.hash(tempPassword, 12);
+
+  await prisma.user.update({
+    where: { id: targetId },
+    data: { password: hash, mustChangePassword: true },
+  });
+
+  logActivity({
+    userId: req.user!.userId,
+    accion: "ADMIN_RESET_PASSWORD",
+    entidad: "User",
+    entidadId: targetId,
+    detalle: `Contraseña reseteada para ${target.email}`,
+  });
+
+  res.json({ message: "Contraseña reseteada", tempPassword });
 });
 
 // ─── Seed inicial (crea 2 admins si no existen) ─────────

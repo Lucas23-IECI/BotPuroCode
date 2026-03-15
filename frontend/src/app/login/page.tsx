@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { login } from "@/lib/api";
 import { Lock, Mail, Eye, EyeOff, AlertCircle, ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -123,6 +124,15 @@ export default function LoginPage() {
               </>
             )}
           </button>
+
+          <div className="text-center">
+            <Link
+              href="/forgot-password"
+              className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </div>
         </form>
 
         <p className="text-center text-xs text-muted-foreground">

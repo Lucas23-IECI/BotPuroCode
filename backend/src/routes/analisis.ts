@@ -6,6 +6,7 @@ import { analizarSitio } from "../services/analisis.service";
 import { checkPageSpeed } from "../services/pagespeed.service";
 import { calcularScore } from "../services/scoring.service";
 import { requireAuth } from "../middleware/auth";
+import { logActivity } from "../lib/activity-logger";
 
 const router = Router();
 router.use(requireAuth);
@@ -25,6 +26,14 @@ router.post("/:negocioId", async (req: Request, res: Response) => {
     // Queue the analysis
     analisisQueue.add(async () => {
       await runFullAnalysis(negocioId);
+    });
+
+    logActivity({
+      userId: req.user!.userId,
+      accion: "TRIGGER_ANALISIS",
+      entidad: "Negocio",
+      entidadId: negocioId,
+      detalle: `Análisis encolado: ${negocio.nombre}`,
     });
 
     res.json({
@@ -64,6 +73,13 @@ router.post("/batch", async (req: Request, res: Response) => {
       });
     }
 
+    logActivity({
+      userId: req.user!.userId,
+      accion: "TRIGGER_ANALISIS_BATCH",
+      detalle: `Batch: ${negocios.length} análisis encolados`,
+      metadata: { count: negocios.length },
+    });
+
     res.json({
       message: `${negocios.length} análisis encolados`,
       queueSize: analisisQueue.size,
@@ -75,7 +91,9 @@ router.post("/batch", async (req: Request, res: Response) => {
 
 // ─── GET /api/analisis/queue — Queue status ──────────────
 
-router.get("/queue", (_req: Request, res: Response) => {
+router.get("/queue", (req: Request, res: Response) => {
+  logActivity({ userId: req.user!.userId, accion: "VIEW_QUEUE" });
+
   res.json({
     size: analisisQueue.size,
     pending: analisisQueue.pending,

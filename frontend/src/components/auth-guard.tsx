@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Sidebar, SidebarProvider } from "@/components/sidebar";
 import { MainContent } from "@/components/main-content";
+import { getMe } from "@/lib/api";
 
-const PUBLIC_PATHS = ["/login"];
+const PUBLIC_PATHS = ["/login", "/forgot-password", "/reset-password"];
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -20,9 +21,19 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     const token = localStorage.getItem("botpurocode_token");
     if (!token) {
       router.replace("/login");
-    } else {
-      setAuthorized(true);
+      return;
     }
+    // Validate token with backend
+    getMe()
+      .then((user) => {
+        localStorage.setItem("botpurocode_user", JSON.stringify(user));
+        setAuthorized(true);
+      })
+      .catch(() => {
+        localStorage.removeItem("botpurocode_token");
+        localStorage.removeItem("botpurocode_user");
+        router.replace("/login");
+      });
   }, [pathname, router]);
 
   if (!authorized) return null;

@@ -1,13 +1,14 @@
 import { Router, type Request, type Response } from "express";
 import { prisma } from "../lib/prisma";
 import { requireAuth } from "../middleware/auth";
+import { logActivity } from "../lib/activity-logger";
 
 const router = Router();
 router.use(requireAuth);
 
 // ─── GET /api/export/csv — Export all negocios as CSV ────
 
-router.get("/csv", async (_req: Request, res: Response) => {
+router.get("/csv", async (req: Request, res: Response) => {
   try {
     const negocios = await prisma.negocio.findMany({
       orderBy: { score: "desc" },
@@ -34,6 +35,13 @@ router.get("/csv", async (_req: Request, res: Response) => {
       });
       csvRows.push(row.join(","));
     }
+
+    logActivity({
+      userId: req.user!.userId,
+      accion: "EXPORT_CSV",
+      detalle: `Exportación CSV: ${negocios.length} leads`,
+      metadata: { count: negocios.length },
+    });
 
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
     res.setHeader("Content-Disposition", `attachment; filename="leads_purocode_${Date.now()}.csv"`);
@@ -62,6 +70,13 @@ router.get("/json", async (req: Request, res: Response) => {
       include: {
         analisis: { orderBy: { createdAt: "desc" }, take: 1 },
       },
+    });
+
+    logActivity({
+      userId: req.user!.userId,
+      accion: "EXPORT_JSON",
+      detalle: `Exportación JSON: ${negocios.length} leads`,
+      metadata: { count: negocios.length, filters: { scoreMin, nivelOportunidad } },
     });
 
     res.setHeader("Content-Type", "application/json");
@@ -131,6 +146,14 @@ router.get("/report/:id", async (req: Request, res: Response) => {
         totalContactos: negocio.contactos.length,
       },
     };
+
+    logActivity({
+      userId: req.user!.userId,
+      accion: "EXPORT_REPORT",
+      entidad: "Negocio",
+      entidadId: negocio.id,
+      detalle: `Reporte generado: ${negocio.nombre}`,
+    });
 
     res.json(report);
   } catch (err) {

@@ -114,6 +114,22 @@ model User {
   propuestas        Propuesta[]
   notificaciones    Notificacion[]
   activityLogs      ActivityLog[]
+  passwordResets    PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([token])
+  @@index([userId])
 }
 
 model ActivityLog {

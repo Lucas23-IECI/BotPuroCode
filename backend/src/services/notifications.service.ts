@@ -8,11 +8,12 @@ import nodemailer from "nodemailer";
 import type { TipoNotificacion } from "@prisma/client";
 
 // Configurar transporter solo si hay SMTP configurado
+const smtpSecure = process.env.SMTP_SECURE === "true" || Number(process.env.SMTP_PORT) === 465;
 const transporter = process.env.SMTP_HOST
   ? nodemailer.createTransport({
       host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT) || 587,
-      secure: false,
+      port: Number(process.env.SMTP_PORT) || 465,
+      secure: smtpSecure,
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
@@ -21,7 +22,7 @@ const transporter = process.env.SMTP_HOST
   : null;
 
 const FROM_EMAIL = process.env.SMTP_USER || "noreply@purocode.com";
-const NOTIFICATION_EMAILS = (process.env.NOTIFICATION_EMAILS || "")
+const NOTIFICATION_EMAILS = (process.env.NOTIFICATION_EMAIL || "")
   .split(",")
   .map((e) => e.trim())
   .filter(Boolean);

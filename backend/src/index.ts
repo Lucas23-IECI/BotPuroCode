@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 
 import negociosRouter from "./routes/negocios";
 import analisisRouter from "./routes/analisis";
@@ -22,6 +23,7 @@ const allowedOrigins = frontendUrl
   ? [frontendUrl, "http://localhost:3000"]
   : ["http://localhost:3000"];
 
+app.use(helmet());
 app.use(cors({ origin: allowedOrigins }));
 app.use(express.json({ limit: "1mb" }));
 
@@ -51,3 +53,5 @@ app.listen(PORT, () => {
   console.log(`[BotPuroCode] Backend corriendo en http://localhost:${PORT}`);
   iniciarCronJobs();
 });
+
+export default app;
