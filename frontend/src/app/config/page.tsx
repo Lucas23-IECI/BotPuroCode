@@ -68,31 +68,31 @@ export default function ConfigPage() {
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Configuración</h1>
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">Configuración</h1>
         <p className="text-sm text-muted-foreground">Cuenta y ajustes del sistema</p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Profile card */}
-        <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+        <div className="rounded-2xl border border-border/60 bg-card p-5 space-y-4 transition-shadow hover:shadow-md">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground text-lg font-bold">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 text-white text-lg font-bold shadow-md shadow-violet-500/20">
               {currentUser?.nombre?.charAt(0)?.toUpperCase() ?? "U"}
             </div>
             <div>
               <h2 className="text-sm font-semibold text-foreground">{currentUser?.nombre ?? "Usuario"}</h2>
               <p className="text-xs text-muted-foreground">{currentUser?.email ?? ""}</p>
-              <span className="text-xs text-primary capitalize">{currentUser?.rol?.toLowerCase() ?? "usuario"}</span>
+              <span className="text-xs text-violet-500 capitalize">{currentUser?.rol?.toLowerCase() ?? "usuario"}</span>
             </div>
           </div>
         </div>
 
         {/* Change Password */}
-        <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+        <div className="rounded-2xl border border-border/60 bg-card p-5 space-y-4 transition-shadow hover:shadow-md">
           <div className="flex items-center gap-2">
-            <Lock className="h-4 w-4 text-muted-foreground" />
+            <Lock className="h-4 w-4 text-violet-500" />
             <h3 className="text-sm font-semibold text-foreground">Cambiar Contraseña</h3>
           </div>
 
@@ -104,12 +104,12 @@ export default function ConfigPage() {
                   type={showCurrent ? "text" : "password"}
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 pr-10 text-sm text-foreground"
+                  className="w-full rounded-xl border border-input bg-background px-3 py-2.5 pr-10 text-sm text-foreground transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowCurrent(!showCurrent)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-muted-foreground transition-colors hover:text-foreground"
                 >
                   {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -123,7 +123,7 @@ export default function ConfigPage() {
                   type={showNew ? "text" : "password"}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 pr-10 text-sm text-foreground"
+                  className="w-full rounded-xl border border-input bg-background px-3 py-2.5 pr-10 text-sm text-foreground transition-all"
                 />
                 <button
                   type="button"
@@ -138,7 +138,7 @@ export default function ConfigPage() {
             <button
               onClick={handleChangePassword}
               disabled={!currentPassword || !newPassword || changingPw}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              className="rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-violet-500/20 hover:shadow-lg transition-all disabled:opacity-50"
             >
               {changingPw ? "Actualizando…" : "Actualizar Contraseña"}
             </button>
@@ -146,9 +146,9 @@ export default function ConfigPage() {
         </div>
 
         {/* Team members */}
-        <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+        <div className="rounded-2xl border border-border/60 bg-card p-5 space-y-4 transition-shadow hover:shadow-md">
           <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 text-violet-500" />
             <h3 className="text-sm font-semibold text-foreground">Equipo</h3>
           </div>
           {users.length === 0 ? (
@@ -156,8 +156,8 @@ export default function ConfigPage() {
           ) : (
             <div className="space-y-2">
               {users.map((u) => (
-                <div key={u.id} className="flex items-center gap-3 rounded-lg border border-border bg-muted/20 p-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary text-xs font-bold">
+                <div key={u.id} className="flex items-center gap-3 rounded-xl border border-border/40 bg-muted/10 p-3 transition-colors hover:bg-accent/50">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500 text-xs font-bold">
                     {u.nombre.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1">
@@ -172,9 +172,9 @@ export default function ConfigPage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+        <div className="rounded-2xl border border-border/60 bg-card p-5 space-y-4 transition-shadow hover:shadow-md">
           <div className="flex items-center gap-2">
-            <Settings className="h-4 w-4 text-muted-foreground" />
+            <Settings className="h-4 w-4 text-violet-500" />
             <h3 className="text-sm font-semibold text-foreground">Acciones Rápidas</h3>
           </div>
 
@@ -182,9 +182,9 @@ export default function ConfigPage() {
             <button
               onClick={handleSeedPlantillas}
               disabled={seeding}
-              className="flex w-full items-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+              className="flex w-full items-center gap-2 rounded-xl border border-border/60 px-4 py-3 text-sm text-foreground hover:bg-accent/50 transition-all disabled:opacity-50"
             >
-              <Sparkles className="h-4 w-4 text-yellow-400" />
+              <Sparkles className="h-4 w-4 text-amber-400" />
               {seeding ? "Cargando…" : "Cargar plantillas predeterminadas"}
             </button>
           </div>

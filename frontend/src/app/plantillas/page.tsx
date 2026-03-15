@@ -149,19 +149,19 @@ export default function PlantillasPage() {
   const emailCount = plantillas.filter((p) => p.tipo === "EMAIL").length;
 
   return (
-    <div className="space-y-5">
+    <div className="animate-fade-in space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Plantillas</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Plantillas</h1>
           <p className="text-sm text-muted-foreground">Mensajes predefinidos para WhatsApp y Email</p>
         </div>
         <div className="flex gap-2">
           {plantillas.length === 0 && !loading && (
-            <button onClick={handleSeed} className="flex items-center gap-2 rounded-lg bg-yellow-500/20 px-4 py-2 text-sm font-medium text-yellow-400 hover:bg-yellow-500/30">
+            <button onClick={handleSeed} className="flex items-center gap-2 rounded-xl bg-yellow-500/20 px-4 py-2 text-sm font-medium text-yellow-400 hover:bg-yellow-500/30 transition-colors">
               <Sparkles className="h-4 w-4" /> Cargar por defecto
             </button>
           )}
-          <button onClick={openCreate} className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+          <button onClick={openCreate} className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-4 py-2 text-sm font-medium text-white shadow-md shadow-violet-500/20 hover:brightness-110 transition-all">
             <Plus className="h-4 w-4" /> Nueva plantilla
           </button>
         </div>
@@ -174,9 +174,9 @@ export default function PlantillasPage() {
             key={t}
             onClick={() => setTipoFilter(t)}
             className={cn(
-              "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+              "flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium transition-all",
               tipoFilter === t
-                ? "bg-primary text-primary-foreground"
+                ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow"
                 : "bg-muted/50 text-muted-foreground hover:bg-muted"
             )}
           >
@@ -192,7 +192,7 @@ export default function PlantillasPage() {
         <div className="space-y-3">
           {loading && <p className="text-sm text-muted-foreground">Cargando...</p>}
           {filtered.map((p) => (
-            <div key={p.id} className="rounded-xl border border-border bg-card p-4">
+            <div key={p.id} className="rounded-2xl border border-border/60 bg-card p-4 transition-shadow hover:shadow-md">
               <div className="mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {p.tipo === "WHATSAPP" ? (
@@ -203,13 +203,13 @@ export default function PlantillasPage() {
                   <h3 className="text-sm font-semibold text-foreground">{p.nombre}</h3>
                 </div>
                 <div className="flex gap-1">
-                  <button onClick={() => copyToClipboard(p.cuerpo, p.id)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground" title="Copiar">
+                  <button onClick={() => copyToClipboard(p.cuerpo, p.id)} className="rounded-xl p-1.5 text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors" title="Copiar">
                     {copiedId === p.id ? <Check className="h-3.5 w-3.5 text-green-400" /> : <Copy className="h-3.5 w-3.5" />}
                   </button>
-                  <button onClick={() => openEdit(p)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground" title="Editar">
+                  <button onClick={() => openEdit(p)} className="rounded-xl p-1.5 text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors" title="Editar">
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
-                  <button onClick={() => handleDelete(p.id)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-500/10 hover:text-red-400" title="Eliminar">
+                  <button onClick={() => handleDelete(p.id)} className="rounded-xl p-1.5 text-muted-foreground hover:bg-red-500/10 hover:text-red-400 transition-colors" title="Eliminar">
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
@@ -232,12 +232,12 @@ export default function PlantillasPage() {
 
         {/* Editor panel */}
         {(creating || editing) && (
-          <div className="rounded-xl border border-border bg-card p-5">
+          <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-foreground">
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">
                 {editing ? "Editar plantilla" : "Nueva plantilla"}
               </h2>
-              <button onClick={closeForm} className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground">
+              <button onClick={closeForm} className="rounded-xl p-1.5 text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -249,7 +249,7 @@ export default function PlantillasPage() {
                   value={formNombre}
                   onChange={(e) => setFormNombre(e.target.value)}
                   required
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                  className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-all"
                   placeholder="WhatsApp - Primer contacto"
                 />
               </div>
@@ -260,7 +260,7 @@ export default function PlantillasPage() {
                   <select
                     value={formTipo}
                     onChange={(e) => setFormTipo(e.target.value as "WHATSAPP" | "EMAIL")}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                    className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-all"
                   >
                     <option value="WHATSAPP">WhatsApp</option>
                     <option value="EMAIL">Email</option>
@@ -271,7 +271,7 @@ export default function PlantillasPage() {
                   <select
                     value={formCategoria}
                     onChange={(e) => setFormCategoria(e.target.value)}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                    className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-all"
                   >
                     <option value="">Sin categoría</option>
                     {CATEGORIAS.map((c) => (
@@ -287,7 +287,7 @@ export default function PlantillasPage() {
                   <input
                     value={formAsunto}
                     onChange={(e) => setFormAsunto(e.target.value)}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                    className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-all"
                     placeholder="Propuesta web para {nombre}"
                   />
                 </div>
@@ -300,7 +300,7 @@ export default function PlantillasPage() {
                   onChange={(e) => setFormCuerpo(e.target.value)}
                   required
                   rows={8}
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                  className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-all"
                   placeholder="Hola! 👋 Soy Lucas de PuroCode..."
                 />
               </div>
@@ -314,7 +314,7 @@ export default function PlantillasPage() {
                       key={v.var}
                       type="button"
                       onClick={() => insertVariable(v.var)}
-                      className="rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/20"
+                      className="rounded-md bg-violet-500/10 px-2 py-1 text-xs font-medium text-violet-500 hover:bg-violet-500/20 transition-colors"
                       title={v.desc}
                     >
                       {v.var}
@@ -324,10 +324,10 @@ export default function PlantillasPage() {
               </div>
 
               <div className="flex gap-2">
-                <button type="submit" className="flex-1 rounded-lg bg-primary py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+                <button type="submit" className="flex-1 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 py-2 text-sm font-medium text-white shadow-md shadow-violet-500/20 hover:brightness-110 transition-all">
                   {editing ? "Guardar cambios" : "Crear plantilla"}
                 </button>
-                <button type="button" onClick={closeForm} className="rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-muted">
+                <button type="button" onClick={closeForm} className="rounded-xl border border-border/60 px-4 py-2 text-sm text-muted-foreground hover:bg-accent/50 transition-colors">
                   Cancelar
                 </button>
               </div>

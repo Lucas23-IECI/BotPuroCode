@@ -80,9 +80,9 @@ function KanbanCard({ negocio, isDragOverlay, onQuickWa }: { negocio: Negocio; i
 
   const content = (
     <div className={cn(
-      "group rounded-xl border border-border bg-card p-3 transition-all hover:shadow-md",
+      "group rounded-xl border border-border/60 bg-card p-3 transition-all hover:shadow-md hover:-translate-y-0.5",
       isDragging && "opacity-40",
-      isDragOverlay && "shadow-2xl ring-2 ring-primary/50"
+      isDragOverlay && "shadow-2xl ring-2 ring-violet-500/50"
     )}>
       <div className="flex items-start gap-2">
         <button
@@ -214,7 +214,7 @@ function KanbanColumn({
       className={cn(
         "min-w-[260px] flex-1 rounded-xl border border-border border-t-4 transition-colors",
         col.color,
-        isOver ? "bg-primary/5 ring-2 ring-primary/30" : col.tint
+        isOver ? "bg-primary/5 ring-2 ring-violet-500/30" : col.tint
       )}
     >
       <div className="flex items-center justify-between p-3">
@@ -363,15 +363,15 @@ export default function PipelinePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
-      </div>
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-violet-800 dark:border-t-violet-400" />
+    </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Pipeline CRM</h1>
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">Pipeline CRM</h1>
         <p className="text-sm text-muted-foreground">
           Arrastra los leads entre columnas para actualizar su estado
         </p>
@@ -379,7 +379,7 @@ export default function PipelinePage() {
 
       {/* Seguimientos pendientes */}
       {seguimientos.length > 0 && (
-        <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-4">
+        <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/5 p-4">
           <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-yellow-400">
             <Calendar className="h-4 w-4" />
             Seguimientos pendientes ({seguimientos.length})
@@ -431,8 +431,8 @@ export default function PipelinePage() {
 
       {/* Quick WhatsApp Modal */}
       {waModalNegocio && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl border border-border/50 bg-card p-6 space-y-4 shadow-2xl animate-scale-in">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-foreground">
                 WhatsApp — {waModalNegocio.nombre}

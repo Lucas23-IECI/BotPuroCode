@@ -108,11 +108,11 @@ export default function MapaPage() {
   }, [withCoords]);
 
   return (
-    <div className="space-y-4">
+    <div className="animate-fade-in space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <MapPin className="h-6 w-6 text-primary" /> Mapa de Leads
+          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <MapPin className="h-6 w-6 text-violet-500" /> Mapa de Leads
           </h1>
           <p className="text-sm text-muted-foreground">
             {withCoords.length} leads con ubicación
@@ -122,8 +122,8 @@ export default function MapaPage() {
         <button
           onClick={() => setShowFilter(!showFilter)}
           className={cn(
-            "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-            showFilter ? "bg-primary text-primary-foreground" : "bg-muted/50 text-muted-foreground hover:bg-muted"
+            "flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-all",
+            showFilter ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow" : "bg-muted/50 text-muted-foreground hover:bg-muted"
           )}
         >
           {showFilter ? <X className="h-4 w-4" /> : <Filter className="h-4 w-4" />}
@@ -132,7 +132,7 @@ export default function MapaPage() {
       </div>
 
       {showFilter && (
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className="rounded-2xl border border-border/60 bg-card p-4">
           <label className="mb-1 block text-xs font-medium text-muted-foreground">
             Score mínimo: {scoreMin}
           </label>
@@ -142,7 +142,7 @@ export default function MapaPage() {
             max={100}
             value={scoreMin}
             onChange={(e) => setScoreMin(Number(e.target.value))}
-            className="w-full accent-primary"
+            className="w-full accent-violet-500"
           />
           <div className="mt-1 flex justify-between text-xs text-muted-foreground">
             <span>0</span>
@@ -153,10 +153,10 @@ export default function MapaPage() {
       )}
 
       {/* Map */}
-      <div className="relative h-[calc(100vh-250px)] min-h-[400px] overflow-hidden rounded-xl border border-border">
+      <div className="relative h-[calc(100vh-250px)] min-h-[400px] overflow-hidden rounded-2xl border border-border/60 shadow-sm">
         {loading && (
           <div className="flex h-full items-center justify-center bg-card">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-violet-900 dark:border-t-violet-400" />
           </div>
         )}
         {!loading && leafletReady && (

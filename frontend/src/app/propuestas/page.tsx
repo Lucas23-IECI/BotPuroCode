@@ -121,22 +121,22 @@ export default function PropuestasPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-violet-900 dark:border-t-violet-400" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="animate-fade-in space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Propuestas</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Propuestas</h1>
           <p className="text-sm text-muted-foreground">{propuestas.length} propuestas en total</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-violet-500/20 hover:brightness-110 transition-all"
         >
           <Plus className="h-4 w-4" /> Nueva Propuesta
         </button>
@@ -147,8 +147,8 @@ export default function PropuestasPage() {
         <button
           onClick={() => setFilterEstado("")}
           className={cn(
-            "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-            !filterEstado ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+            "rounded-xl px-3 py-1.5 text-xs font-medium transition-all",
+            !filterEstado ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow" : "bg-muted text-muted-foreground hover:bg-muted/80"
           )}
         >
           Todas ({propuestas.length})
@@ -160,8 +160,8 @@ export default function PropuestasPage() {
               key={e.value}
               onClick={() => setFilterEstado(e.value)}
               className={cn(
-                "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-                filterEstado === e.value ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                "rounded-xl px-3 py-1.5 text-xs font-medium transition-all",
+                filterEstado === e.value ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow" : "bg-muted text-muted-foreground hover:bg-muted/80"
               )}
             >
               {e.label} ({count})
@@ -172,8 +172,8 @@ export default function PropuestasPage() {
 
       {/* Propuestas list */}
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-12 text-center">
-          <FileText className="mx-auto h-12 w-12 text-muted-foreground/50" />
+        <div className="rounded-2xl border border-dashed border-border/60 p-12 text-center">
+          <FileText className="mx-auto h-12 w-12 text-violet-400/50" />
           <p className="mt-3 text-sm text-muted-foreground">
             {propuestas.length === 0 ? "No hay propuestas aún. ¡Crea la primera!" : "Sin resultados para este filtro."}
           </p>
@@ -184,13 +184,13 @@ export default function PropuestasPage() {
             const neg = negocioMap[p.negocioId];
             const estadoInfo = ESTADOS.find((e) => e.value === p.estado) ?? ESTADOS[0];
             return (
-              <div key={p.id} className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 hover:bg-muted/30 transition-colors">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <div key={p.id} className="flex items-center gap-4 rounded-2xl border border-border/60 bg-card p-4 hover:shadow-md transition-all">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-500">
                   <FileText className="h-5 w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <Link href={`/leads/${p.negocioId}`} className="text-sm font-semibold text-foreground hover:text-primary truncate">
+                    <Link href={`/leads/${p.negocioId}`} className="text-sm font-semibold text-foreground hover:text-violet-500 truncate">
                       {neg?.nombre ?? "Negocio"}
                     </Link>
                     <span className={cn("rounded-full px-2 py-0.5 text-xs", estadoInfo.color)}>
@@ -208,7 +208,7 @@ export default function PropuestasPage() {
                   <select
                     value={p.estado}
                     onChange={(e) => handleEstadoChange(p.id, e.target.value)}
-                    className="rounded-lg border border-input bg-background px-2 py-1 text-xs text-foreground"
+                    className="rounded-xl border border-input bg-background px-2 py-1.5 text-xs text-foreground transition-all"
                   >
                     {ESTADOS.map((e) => (
                       <option key={e.value} value={e.value}>{e.label}</option>
@@ -218,7 +218,7 @@ export default function PropuestasPage() {
                     href={getPropuestaPDFUrl(p.id)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1 rounded-lg border border-input px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
+                    className="flex items-center gap-1 rounded-xl border border-input px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent/50 transition-colors"
                   >
                     <Download className="h-3 w-3" /> PDF
                   </a>
@@ -231,8 +231,8 @@ export default function PropuestasPage() {
 
       {/* ─── Create Modal ─── */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md animate-scale-in rounded-2xl border border-border/50 bg-card p-6 space-y-4 shadow-2xl">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-foreground">Nueva Propuesta</h2>
               <button onClick={() => setShowModal(false)} className="text-muted-foreground hover:text-foreground">
@@ -244,7 +244,7 @@ export default function PropuestasPage() {
             <div>
               <label className="mb-1 block text-xs font-medium text-muted-foreground">Negocio</label>
               {selectedNegocio ? (
-                <div className="flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-2 text-sm">
+                <div className="flex items-center gap-2 rounded-xl border border-input bg-background px-3 py-2.5 text-sm">
                   <span className="flex-1 text-foreground">{selectedNegocio.nombre}</span>
                   <button onClick={() => setSelectedNegocio(null)} className="text-muted-foreground hover:text-foreground">
                     <X className="h-4 w-4" />
@@ -259,10 +259,10 @@ export default function PropuestasPage() {
                       value={searchNegocio}
                       onChange={(e) => setSearchNegocio(e.target.value)}
                       placeholder="Buscar negocio..."
-                      className="w-full rounded-lg border border-input bg-background py-2 pl-10 pr-3 text-sm text-foreground placeholder:text-muted-foreground"
+                      className="w-full rounded-xl border border-input bg-background py-2.5 pl-10 pr-3 text-sm text-foreground placeholder:text-muted-foreground transition-all"
                     />
                   </div>
-                  <div className="max-h-40 overflow-y-auto rounded-lg border border-input">
+                  <div className="max-h-40 overflow-y-auto rounded-xl border border-input">
                     {filteredNegocios.map((n) => (
                       <button
                         key={n.id}
@@ -286,9 +286,9 @@ export default function PropuestasPage() {
                     key={t.value}
                     onClick={() => setTipoServicio(t.value)}
                     className={cn(
-                      "rounded-lg border p-3 text-center text-sm transition-colors",
+                      "rounded-xl border p-3 text-center text-sm transition-all",
                       tipoServicio === t.value
-                        ? "border-primary bg-primary/10 text-primary"
+                        ? "border-violet-500/50 bg-violet-500/10 text-violet-500"
                         : "border-input bg-background text-muted-foreground hover:bg-muted"
                     )}
                   >
@@ -308,14 +308,14 @@ export default function PropuestasPage() {
                 max={50}
                 value={descuento}
                 onChange={(e) => setDescuento(Number(e.target.value))}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-all"
               />
             </div>
 
             <button
               onClick={handleCreate}
               disabled={!selectedNegocio || creating}
-              className="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              className="w-full rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-violet-500/20 hover:brightness-110 transition-all disabled:opacity-50"
             >
               {creating ? "Creando…" : "Crear Propuesta"}
             </button>

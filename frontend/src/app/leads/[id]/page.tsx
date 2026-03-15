@@ -271,7 +271,7 @@ export default function LeadDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-violet-900 dark:border-t-violet-400" />
       </div>
     );
   }
@@ -300,7 +300,7 @@ export default function LeadDetailPage() {
   const isNoExiste = negocio.estadoContacto === "CERRADO_NO_EXISTE";
 
   return (
-    <div className="space-y-5">
+    <div className="animate-fade-in space-y-5">
       {/* Nav */}
       <button onClick={() => router.push("/leads")} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Volver a Leads
@@ -308,7 +308,7 @@ export default function LeadDetailPage() {
 
       {/* No existe banner */}
       {isNoExiste && (
-        <div className="flex items-center gap-3 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3">
+        <div className="flex items-center gap-3 rounded-2xl border border-red-500/30 bg-red-500/5 px-4 py-3">
           <Ban className="h-5 w-5 text-red-400" />
           <p className="text-sm font-medium text-red-400">Este negocio fue marcado como cerrado o inexistente</p>
         </div>
@@ -317,7 +317,7 @@ export default function LeadDetailPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold text-foreground">{negocio.nombre}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">{negocio.nombre}</h1>
           <p className="text-muted-foreground">
             {negocio.rubro} · {negocio.comuna}
             {negocio.direccion && ` · ${negocio.direccion}`}
@@ -391,7 +391,7 @@ export default function LeadDetailPage() {
                   fetchData();
                 } catch { toast("Error al asignar", "error"); }
               }}
-              className="rounded-lg border border-input bg-background px-2 py-1 text-xs text-foreground"
+              className="rounded-xl border border-input bg-background px-2 py-1 text-xs text-foreground"
             >
               <option value="">Sin asignar</option>
               {users.map((u) => (
@@ -405,7 +405,7 @@ export default function LeadDetailPage() {
           <button
             onClick={handleEnrichGoogle}
             disabled={enriching}
-            className="flex items-center gap-2 rounded-lg border border-yellow-500/50 px-3 py-2 text-sm font-medium text-yellow-400 hover:bg-yellow-500/10 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl border border-yellow-500/50 px-3 py-2 text-sm font-medium text-yellow-400 hover:bg-yellow-500/10 disabled:opacity-50 transition-colors"
             title="Enriquecer con Google Places"
           >
             <Sparkles className="h-4 w-4" />
@@ -414,7 +414,7 @@ export default function LeadDetailPage() {
           <button
             onClick={handleAnalysis}
             disabled={analyzing}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-4 py-2 text-sm font-medium text-white shadow-md shadow-violet-500/20 hover:brightness-110 transition-all disabled:opacity-50"
           >
             <PlayCircle className="h-4 w-4" />
             {analyzing ? "Analizando…" : "Analizar"}
@@ -422,7 +422,7 @@ export default function LeadDetailPage() {
           {!isNoExiste && (
             <button
               onClick={handleMarkNoExiste}
-              className="rounded-lg border border-orange-500/50 p-2 text-orange-400 hover:bg-orange-500/10"
+              className="rounded-xl border border-orange-500/50 p-2 text-orange-400 hover:bg-orange-500/10 transition-colors"
               title="Marcar como inexistente/cerrado"
             >
               <Ban className="h-4 w-4" />
@@ -430,7 +430,7 @@ export default function LeadDetailPage() {
           )}
           <button
             onClick={handleDelete}
-            className="rounded-lg border border-destructive/50 p-2 text-destructive hover:bg-destructive/10"
+              className="rounded-xl border border-destructive/50 p-2 text-destructive hover:bg-destructive/10 transition-colors"
             title="Eliminar definitivamente"
           >
             <Trash2 className="h-4 w-4" />
@@ -459,25 +459,25 @@ export default function LeadDetailPage() {
           </a>
         )}
         <a href={mapsSearchLink} target="_blank" rel="noopener noreferrer"
-          className="flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-medium text-foreground shadow-sm hover:bg-muted transition-transform hover:scale-105">
+          className="flex items-center gap-2 rounded-xl border border-border/60 bg-card px-5 py-2.5 text-sm font-medium text-foreground shadow-sm hover:bg-accent/50 transition-all hover:scale-105">
           <Search className="h-4 w-4" /> Buscar en Maps
         </a>
         {mapsCoordLink && (
           <a href={mapsCoordLink} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-medium text-foreground shadow-sm hover:bg-muted transition-transform hover:scale-105">
+            className="flex items-center gap-2 rounded-xl border border-border/60 bg-card px-5 py-2.5 text-sm font-medium text-foreground shadow-sm hover:bg-accent/50 transition-all hover:scale-105">
             <Navigation className="h-4 w-4" /> Ver coordenadas
           </a>
         )}
         {negocio.sitioWeb && (
           <a href={negocio.sitioWeb} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-medium text-foreground shadow-sm hover:bg-muted transition-transform hover:scale-105">
+            className="flex items-center gap-2 rounded-xl border border-border/60 bg-card px-5 py-2.5 text-sm font-medium text-foreground shadow-sm hover:bg-accent/50 transition-all hover:scale-105">
             <Eye className="h-4 w-4" /> Ver sitio web
           </a>
         )}
       </div>
 
       {/* ─── Tabs ─────────────────────────────────────────── */}
-      <div className="flex gap-1 border-b border-border">
+      <div className="flex gap-1 border-b border-border/60">
         {([
           { key: "resumen" as Tab, label: "Resumen" },
           { key: "analisis" as Tab, label: "Análisis Técnico" },
@@ -488,9 +488,9 @@ export default function LeadDetailPage() {
             key={t.key}
             onClick={() => setActiveTab(t.key)}
             className={cn(
-              "px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px",
+              "px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px",
               activeTab === t.key
-                ? "border-primary text-primary"
+                ? "border-violet-500 text-violet-500"
                 : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/30"
             )}
           >
@@ -504,10 +504,10 @@ export default function LeadDetailPage() {
         <>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {/* Score card with ring */}
-          <div className="rounded-xl border border-border bg-card p-5">
+          <div className="rounded-2xl border border-border/60 bg-card p-5 transition-shadow hover:shadow-md">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Score</h3>
-              <button onClick={() => setShowScoreInfo(!showScoreInfo)} className="text-xs text-primary hover:underline">
+              <button onClick={() => setShowScoreInfo(!showScoreInfo)} className="text-xs text-violet-500 hover:underline">
                 {showScoreInfo ? "Ocultar" : "¿Cómo funciona?"}
               </button>
             </div>
@@ -536,7 +536,7 @@ export default function LeadDetailPage() {
           </div>
 
           {/* Presencia Digital card with icon */}
-          <div className="rounded-xl border border-border bg-card p-5">
+          <div className="rounded-2xl border border-border/60 bg-card p-5 transition-shadow hover:shadow-md">
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Presencia Digital</h3>
             <div className="flex items-center gap-3">
               <div className={cn("rounded-xl bg-muted/50 p-3", presIcon.color)}>
@@ -566,14 +566,14 @@ export default function LeadDetailPage() {
           </div>
 
           {/* CRM card with colored dot */}
-          <div className="rounded-xl border border-border bg-card p-5">
+          <div className="rounded-2xl border border-border/60 bg-card p-5 transition-shadow hover:shadow-md">
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Estado CRM</h3>
             <div className="flex items-center gap-2 mb-3">
               <div className={cn("h-3 w-3 rounded-full", CRM_DOT_COLORS[negocio.estadoContacto] ?? "bg-gray-400")} />
               <select
                 value={negocio.estadoContacto}
                 onChange={(e) => handleEstadoChange(e.target.value)}
-                className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                className="flex-1 rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-all"
               >
                 {CRM_STATES.map((s) => (
                   <option key={s} value={s}>{CRM_LABELS[s]}</option>
@@ -602,11 +602,11 @@ export default function LeadDetailPage() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {/* Mini Map */}
           {tileUrl && (
-              <div className="rounded-xl border border-border bg-card p-5">
+              <div className="rounded-2xl border border-border/60 bg-card p-5 transition-shadow hover:shadow-md">
                 <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                   <Map className="h-4 w-4" /> Ubicación
                 </h3>
-                <a href={mapsCoordLink ?? mapsSearchLink} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-lg">
+                <a href={mapsCoordLink ?? mapsSearchLink} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-xl">
                   <img src={tileUrl} alt="Mapa"
                     className="h-40 w-full object-cover opacity-90 transition-opacity hover:opacity-100" />
                 </a>
@@ -619,7 +619,7 @@ export default function LeadDetailPage() {
           )}
 
           {/* Follow-up scheduler */}
-          <div className="rounded-xl border border-border bg-card p-5">
+          <div className="rounded-2xl border border-border/60 bg-card p-5 transition-shadow hover:shadow-md">
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               <CalendarDays className="h-4 w-4" /> Agendar Seguimiento
             </h3>
@@ -640,12 +640,12 @@ export default function LeadDetailPage() {
                 value={seguimientoDate}
                 min={new Date().toISOString().split("T")[0]}
                 onChange={(e) => setSeguimientoDate(e.target.value)}
-                className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                className="flex-1 rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-all"
               />
               <button
                 onClick={handleSaveSeguimiento}
                 disabled={!seguimientoDate}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                className="rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-violet-500/20 hover:brightness-110 transition-all disabled:opacity-50"
               >
                 Agendar
               </button>
@@ -655,11 +655,11 @@ export default function LeadDetailPage() {
 
         {/* Google Photos */}
         {negocio.fotosUrl && negocio.fotosUrl.length > 0 && (
-          <div className="rounded-xl border border-border bg-card p-5">
+          <div className="rounded-2xl border border-border/60 bg-card p-5 transition-shadow hover:shadow-md">
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Fotos Google</h3>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {negocio.fotosUrl.map((url: string, i: number) => (
-                <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="group relative overflow-hidden rounded-lg border border-border">
+                <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="group relative overflow-hidden rounded-xl border border-border/60">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={url} alt={`Foto ${i + 1}`} className="h-36 w-full object-cover transition-transform group-hover:scale-105" loading="lazy" />
                   <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/20" />
@@ -676,7 +676,7 @@ export default function LeadDetailPage() {
       {activeTab === "analisis" && (
         <>
           {lastAnalisis ? (
-            <div className="rounded-xl border border-border bg-card p-5">
+            <div className="rounded-2xl border border-border/60 bg-card p-5">
               <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm md:grid-cols-4">
                 <div className="flex items-center gap-2"><Check ok={lastAnalisis.tieneSSL} /> SSL</div>
                 <div className="flex items-center gap-2"><Check ok={lastAnalisis.esResponsive} /> Responsive</div>
@@ -766,12 +766,12 @@ export default function LeadDetailPage() {
               </div>
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed border-border bg-card/50 p-8 text-center">
-              <PlayCircle className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
+            <div className="rounded-2xl border border-dashed border-border/60 bg-card/50 p-8 text-center">
+              <PlayCircle className="mx-auto mb-3 h-8 w-8 text-violet-400/50" />
               <p className="text-sm font-medium text-foreground">Sin análisis técnico</p>
               <p className="mt-1 text-xs text-muted-foreground">Haz clic en &quot;Analizar&quot; para evaluar la presencia web</p>
               <button onClick={handleAnalysis} disabled={analyzing}
-                className="mt-3 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+                className="mt-3 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-4 py-2 text-sm font-medium text-white shadow-md shadow-violet-500/20 hover:brightness-110 transition-all disabled:opacity-50">
                 {analyzing ? "Analizando…" : "Analizar ahora"}
               </button>
             </div>
@@ -781,14 +781,14 @@ export default function LeadDetailPage() {
 
       {/* ═══ TAB: Propuestas ═══ */}
       {activeTab === "propuestas" && (
-        <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+        <div className="rounded-2xl border border-border/60 bg-card p-5 space-y-4">
           {!showPropForm ? (
             <button onClick={() => setShowPropForm(true)}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+              className="rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-violet-500/20 hover:brightness-110 transition-all">
               + Nueva Propuesta
             </button>
           ) : (
-            <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+            <div className="space-y-3 rounded-xl border border-border/60 bg-muted/30 p-4">
               <div>
                 <label className="mb-1 block text-xs font-medium text-muted-foreground">Tipo de Servicio</label>
                 <div className="grid grid-cols-3 gap-2">
@@ -798,8 +798,8 @@ export default function LeadDetailPage() {
                     { value: "ecommerce", label: "E-Commerce", precio: "$550.000" },
                   ].map((t) => (
                     <button key={t.value} onClick={() => setPropTipo(t.value)}
-                      className={cn("rounded-lg border p-2 text-center text-xs transition-colors",
-                        propTipo === t.value ? "border-primary bg-primary/10 text-primary" : "border-input bg-background text-muted-foreground hover:bg-muted"
+                      className={cn("rounded-xl border p-2 text-center text-xs transition-all",
+                        propTipo === t.value ? "border-violet-500/50 bg-violet-500/10 text-violet-500" : "border-input bg-background text-muted-foreground hover:bg-muted"
                       )}>
                       <div className="font-medium">{t.label}</div>
                       <div>{t.precio}</div>
@@ -810,7 +810,7 @@ export default function LeadDetailPage() {
               <div>
                 <label className="mb-1 block text-xs font-medium text-muted-foreground">Descuento (%)</label>
                 <input type="number" min={0} max={50} value={propDescuento} onChange={(e) => setPropDescuento(Number(e.target.value))}
-                  className="w-24 rounded-lg border border-input bg-background px-3 py-1.5 text-sm text-foreground" />
+                  className="w-24 rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground transition-all" />
               </div>
               <div className="flex gap-2">
                 <button onClick={async () => {
@@ -823,10 +823,10 @@ export default function LeadDetailPage() {
                     fetchData();
                   } catch { toast("Error al crear propuesta", "error"); }
                   finally { setCreatingProp(false); }
-                }} disabled={creatingProp} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50">
+                }} disabled={creatingProp} className="rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-violet-500/20 hover:brightness-110 transition-all disabled:opacity-50">
                   {creatingProp ? "Creando…" : "Crear"}
                 </button>
-                <button onClick={() => setShowPropForm(false)} className="rounded-lg border border-input px-4 py-2 text-sm text-muted-foreground">Cancelar</button>
+                <button onClick={() => setShowPropForm(false)} className="rounded-xl border border-input px-4 py-2.5 text-sm text-muted-foreground hover:bg-accent/50 transition-colors">Cancelar</button>
               </div>
             </div>
           )}
@@ -842,8 +842,8 @@ export default function LeadDetailPage() {
                   p.estado === "ENVIADA" ? "bg-blue-500/20 text-blue-400" :
                   "bg-gray-500/20 text-gray-400";
                 return (
-                  <div key={p.id} className="flex items-center gap-3 rounded-lg border border-border bg-muted/20 p-3">
-                    <FileText className="h-5 w-5 text-primary shrink-0" />
+                  <div key={p.id} className="flex items-center gap-3 rounded-xl border border-border/60 bg-muted/20 p-3 transition-all hover:shadow-sm">
+                    <FileText className="h-5 w-5 text-violet-500 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-foreground capitalize">{p.tipoServicio}</span>
@@ -876,30 +876,30 @@ export default function LeadDetailPage() {
 
       {/* ═══ TAB: Historial ═══ */}
       {activeTab === "historial" && (
-        <div className="rounded-xl border border-border bg-card p-5">
+        <div className="rounded-2xl border border-border/60 bg-card p-5">
           {!showContactForm ? (
             <button onClick={() => setShowContactForm(true)}
-              className="mb-4 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+              className="mb-4 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-violet-500/20 hover:brightness-110 transition-all">
               + Registrar contacto
             </button>
           ) : (
-            <div className="mb-4 space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+            <div className="mb-4 space-y-3 rounded-xl border border-border/60 bg-muted/30 p-4">
               <div className="grid grid-cols-2 gap-3">
                 <select value={contactForm.tipo} onChange={(e) => setContactForm((f) => ({ ...f, tipo: e.target.value }))}
-                  className="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground">
+                  className="rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-all">
                   {TIPOS_CONTACTO.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
                 <select value={contactForm.resultado} onChange={(e) => setContactForm((f) => ({ ...f, resultado: e.target.value }))}
-                  className="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground">
+                  className="rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-all">
                   {RESULTADOS.map((r) => <option key={r} value={r}>{r.replace(/_/g, " ")}</option>)}
                 </select>
               </div>
               <textarea placeholder="Notas del contacto..." value={contactForm.notas}
                 onChange={(e) => setContactForm((f) => ({ ...f, notas: e.target.value }))}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" rows={3} />
+                className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground transition-all" rows={3} />
               <div className="flex gap-2">
-                <button onClick={handleContactSubmit} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">Guardar</button>
-                <button onClick={() => setShowContactForm(false)} className="rounded-lg border border-input px-4 py-2 text-sm text-muted-foreground">Cancelar</button>
+                <button onClick={handleContactSubmit} className="rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-violet-500/20 hover:brightness-110 transition-all">Guardar</button>
+                <button onClick={() => setShowContactForm(false)} className="rounded-xl border border-input px-4 py-2.5 text-sm text-muted-foreground hover:bg-accent/50 transition-colors">Cancelar</button>
               </div>
             </div>
           )}
@@ -924,7 +924,7 @@ export default function LeadDetailPage() {
                     <div className={cn("absolute -left-6 top-1.5 flex h-[18px] w-[18px] items-center justify-center rounded-full text-white", dotColor)}>
                       {iconMap[c.tipo] ?? <Clock className="h-3 w-3" />}
                     </div>
-                    <div className="rounded-lg border border-border bg-muted/20 p-3">
+                    <div className="rounded-xl border border-border/60 bg-muted/20 p-3 transition-all hover:shadow-sm">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-foreground">{c.tipo}</span>
                         <span className={cn(

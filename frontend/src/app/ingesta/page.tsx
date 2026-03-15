@@ -46,7 +46,7 @@ function StepIndicator({ current, steps }: { current: number; steps: string[] })
             i < current
               ? "bg-green-500 text-white"
               : i === current
-                ? "bg-primary text-primary-foreground"
+                ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow"
                 : "bg-muted text-muted-foreground"
           )}>
             {i < current ? <Check className="h-3.5 w-3.5" /> : i + 1}
@@ -191,16 +191,16 @@ export default function IngestaPage() {
   const missingRequired = !hasNombre || !hasRubro || !hasComuna;
 
   return (
-    <div className="space-y-6">
+    <div className="animate-fade-in space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Ingesta de Datos</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Ingesta de Datos</h1>
         <p className="text-sm text-muted-foreground">
           Agrega negocios manualmente o importa desde un archivo CSV
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 rounded-lg bg-muted/50 p-1">
+      <div className="flex gap-1 rounded-xl bg-muted/50 p-1">
         <button
           onClick={() => { setTab("manual"); resetWizard(); }}
           className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${tab === "manual" ? "bg-card text-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
@@ -217,12 +217,12 @@ export default function IngestaPage() {
 
       {/* ═══ Manual Form ═══ */}
       {tab === "manual" && (
-        <form onSubmit={handleManualSubmit} className="rounded-xl border border-border bg-card p-6">
+        <form onSubmit={handleManualSubmit} className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
               <label className="mb-1.5 block text-sm font-medium text-foreground">Nombre *</label>
               <input type="text" value={form.nombre} onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground" placeholder="Nombre del negocio" />
+                    className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground transition-all" placeholder="Nombre del negocio" />
             </div>
             {[
               { key: "rubro", type: "select", options: RUBROS },
@@ -239,20 +239,20 @@ export default function IngestaPage() {
                 <label className="mb-1.5 block text-sm font-medium capitalize text-foreground">{field.key.replace(/([A-Z])/g, " $1")}</label>
                 {field.type === "select" ? (
                   <select value={form[field.key as keyof typeof form]} onChange={(e) => setForm((f) => ({ ...f, [field.key]: e.target.value }))}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground">
+                    className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-all">
                     {field.options!.map((o) => <option key={o} value={o}>{o}</option>)}
                   </select>
                 ) : (
                   <input type={field.inputType ?? "text"} value={form[field.key as keyof typeof form]}
                     onChange={(e) => setForm((f) => ({ ...f, [field.key]: e.target.value }))}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
+                    className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground transition-all"
                     placeholder={field.placeholder} />
                 )}
               </div>
             ))}
           </div>
           <button type="submit" disabled={creating}
-            className="mt-6 flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+            className="mt-6 flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-6 py-2.5 text-sm font-medium text-white shadow-md shadow-violet-500/20 hover:brightness-110 transition-all disabled:opacity-50">
             <Plus className="h-4 w-4" /> {creating ? "Creando…" : "Crear Negocio"}
           </button>
         </form>
@@ -265,23 +265,23 @@ export default function IngestaPage() {
 
           {/* Step 1: Upload */}
           {wizardStep === "upload" && (
-            <div className="rounded-xl border border-border bg-card p-6">
+            <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
               <div className="mb-5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-primary/10 p-2"><FileSpreadsheet className="h-5 w-5 text-primary" /></div>
+                  <div className="rounded-lg bg-violet-500/10 p-2"><FileSpreadsheet className="h-5 w-5 text-violet-500" /></div>
                   <div>
                     <h3 className="font-semibold text-foreground">Selecciona tu archivo CSV</h3>
                     <p className="text-sm text-muted-foreground">Columnas requeridas: nombre, rubro, comuna</p>
                   </div>
                 </div>
                 <button onClick={downloadTemplate}
-                  className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-foreground hover:bg-muted">
+                  className="flex items-center gap-2 rounded-xl border border-border/60 px-4 py-2 text-sm text-foreground hover:bg-accent/50 transition-colors">
                   <FileDown className="h-4 w-4" /> Plantilla
                 </button>
               </div>
 
-              <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/20 p-10 transition-colors hover:border-primary/50 hover:bg-muted/40">
-                <Upload className="mb-3 h-10 w-10 text-muted-foreground" />
+              <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/60 bg-muted/20 p-10 transition-colors hover:border-violet-500/50 hover:bg-muted/40">
+                <Upload className="mb-3 h-10 w-10 text-violet-400/50" />
                 <span className="text-sm font-medium text-foreground">Arrastra o haz clic para seleccionar</span>
                 <span className="mt-1 text-xs text-muted-foreground">CSV, TXT — máx. 5MB</span>
                 <input ref={fileRef} type="file" accept=".csv,.txt" className="hidden" onChange={handleFileSelect} />
@@ -292,10 +292,10 @@ export default function IngestaPage() {
           {/* Step 2: Preview */}
           {wizardStep === "preview" && (
             <div className="space-y-4">
-              <div className="rounded-xl border border-border bg-card p-5">
+              <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
                 <div className="mb-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Eye className="h-5 w-5 text-primary" />
+                    <Eye className="h-5 w-5 text-violet-500" />
                     <div>
                       <h3 className="font-semibold text-foreground">{csvFileName}</h3>
                       <p className="text-sm text-muted-foreground">{csvRows.length} filas · {csvHeaders.length} columnas</p>
@@ -303,7 +303,7 @@ export default function IngestaPage() {
                   </div>
                   <div className="flex gap-2">
                     <button onClick={resetWizard}
-                      className="flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-muted">
+                      className="flex items-center gap-1.5 rounded-xl border border-border/60 px-4 py-2 text-sm text-muted-foreground hover:bg-accent/50 transition-colors">
                       <ChevronLeft className="h-4 w-4" /> Cambiar archivo
                     </button>
                   </div>
@@ -366,7 +366,7 @@ export default function IngestaPage() {
 
               <div className="flex justify-end">
                 <button onClick={handleImport} disabled={missingRequired}
-                  className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+                  className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-6 py-2.5 text-sm font-medium text-white shadow-md shadow-violet-500/20 hover:brightness-110 transition-all disabled:opacity-50">
                   <Upload className="h-4 w-4" /> Importar {csvRows.length} negocios
                 </button>
               </div>
@@ -375,8 +375,8 @@ export default function IngestaPage() {
 
           {/* Step 3: Importing */}
           {wizardStep === "importing" && (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-border bg-card py-16">
-              <Loader2 className="mb-4 h-10 w-10 animate-spin text-primary" />
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-border/60 bg-card py-16 shadow-sm">
+              <Loader2 className="mb-4 h-10 w-10 animate-spin text-violet-500" />
               <p className="text-lg font-semibold text-foreground">Importando negocios…</p>
               <p className="mt-1 text-sm text-muted-foreground">Procesando {csvRows.length} registros</p>
             </div>
@@ -384,7 +384,7 @@ export default function IngestaPage() {
 
           {/* Step 4: Done */}
           {wizardStep === "done" && importResult && (
-            <div className="rounded-xl border border-border bg-card p-8 text-center">
+            <div className="rounded-2xl border border-border/60 bg-card p-8 text-center shadow-sm">
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-500/20">
                 <Check className="h-7 w-7 text-green-400" />
               </div>
@@ -404,7 +404,7 @@ export default function IngestaPage() {
                 </div>
               </div>
               <button onClick={resetWizard}
-                className="mt-6 rounded-lg border border-border px-6 py-2.5 text-sm font-medium text-foreground hover:bg-muted">
+                className="mt-6 rounded-xl border border-border/60 px-6 py-2.5 text-sm font-medium text-foreground hover:bg-accent/50 transition-colors">
                 Importar otro archivo
               </button>
             </div>

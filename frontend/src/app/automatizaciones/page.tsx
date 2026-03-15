@@ -147,21 +147,21 @@ export default function AutomatizacionesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-violet-900 dark:border-t-violet-400" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="animate-fade-in space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Automatizaciones</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Automatizaciones</h1>
           <p className="text-sm text-muted-foreground">Reglas automáticas para gestión de leads</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-violet-500/20 hover:brightness-110 transition-all"
         >
           {showForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
           {showForm ? "Cancelar" : "Nueva Regla"}
@@ -170,7 +170,7 @@ export default function AutomatizacionesPage() {
 
       {/* Create Form */}
       {showForm && (
-        <div className="rounded-xl border border-border bg-card p-6 space-y-4">
+        <div className="animate-scale-in rounded-2xl border border-border/60 bg-card p-6 space-y-4 shadow-lg">
           <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Nueva Automatización</h3>
 
           <div>
@@ -179,7 +179,7 @@ export default function AutomatizacionesPage() {
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               placeholder="Ej: Notificar cuando lead pasa a Contactado"
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+              className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-all"
             />
           </div>
 
@@ -189,7 +189,7 @@ export default function AutomatizacionesPage() {
               <select
                 value={trigger}
                 onChange={(e) => setTrigger(e.target.value)}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-all"
               >
                 {TRIGGERS.map((t) => (
                   <option key={t.key} value={t.key}>{t.label}</option>
@@ -201,7 +201,7 @@ export default function AutomatizacionesPage() {
               <select
                 value={accion}
                 onChange={(e) => setAccion(e.target.value)}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-all"
               >
                 {ACCIONES.map((a) => (
                   <option key={a.key} value={a.key}>{a.label}</option>
@@ -218,7 +218,7 @@ export default function AutomatizacionesPage() {
                 <select
                   value={estadoAnterior}
                   onChange={(e) => setEstadoAnterior(e.target.value)}
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                  className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-all"
                 >
                   <option value="">Cualquiera</option>
                   {CRM_STATES.map((s) => (
@@ -231,7 +231,7 @@ export default function AutomatizacionesPage() {
                 <select
                   value={estadoNuevo}
                   onChange={(e) => setEstadoNuevo(e.target.value)}
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                  className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-all"
                 >
                   <option value="">Cualquiera</option>
                   {CRM_STATES.map((s) => (
@@ -251,7 +251,7 @@ export default function AutomatizacionesPage() {
                 max={100}
                 value={scoreUmbral}
                 onChange={(e) => setScoreUmbral(Number(e.target.value))}
-                className="w-40 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                className="w-40 rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-all"
               />
             </div>
           )}
@@ -265,7 +265,7 @@ export default function AutomatizacionesPage() {
                   value={notifTitulo}
                   onChange={(e) => setNotifTitulo(e.target.value)}
                   placeholder="Ej: Lead {nombre} cambió de estado"
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                  className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-all"
                 />
               </div>
               <div>
@@ -275,7 +275,7 @@ export default function AutomatizacionesPage() {
                   onChange={(e) => setNotifMensaje(e.target.value)}
                   placeholder="Ej: {nombre} de {comuna} ({rubro}) - Score: {score}"
                   rows={2}
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                  className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-all"
                 />
               </div>
               <p className="text-xs text-muted-foreground">Variables: {"{nombre}"}, {"{rubro}"}, {"{comuna}"}, {"{score}"}</p>
@@ -288,7 +288,7 @@ export default function AutomatizacionesPage() {
               <select
                 value={nuevoEstado}
                 onChange={(e) => setNuevoEstado(e.target.value)}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-all"
               >
                 {CRM_STATES.map((s) => (
                   <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
@@ -300,7 +300,7 @@ export default function AutomatizacionesPage() {
           <button
             onClick={handleCreate}
             disabled={creating || !nombre.trim()}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow-md shadow-violet-500/20 hover:brightness-110 transition-all disabled:opacity-50"
           >
             <Zap className="h-4 w-4" />
             {creating ? "Creando..." : "Crear Automatización"}
@@ -310,8 +310,8 @@ export default function AutomatizacionesPage() {
 
       {/* List */}
       {items.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-12 text-center">
-          <Zap className="mx-auto h-10 w-10 text-muted-foreground/50" />
+        <div className="rounded-2xl border border-dashed border-border/60 p-12 text-center">
+          <Zap className="mx-auto h-10 w-10 text-violet-400/50" />
           <p className="mt-3 text-sm text-muted-foreground">No hay automatizaciones configuradas</p>
           <p className="text-xs text-muted-foreground">Crea tu primera regla para automatizar tu flujo de trabajo</p>
         </div>
@@ -324,8 +324,8 @@ export default function AutomatizacionesPage() {
               <div
                 key={item.id}
                 className={cn(
-                  "rounded-xl border bg-card p-4 transition-colors",
-                  item.activa ? "border-border" : "border-border/50 opacity-60"
+                  "rounded-2xl border bg-card p-4 transition-all hover:shadow-md",
+                  item.activa ? "border-border/60" : "border-border/40 opacity-60"
                 )}
               >
                 <div className="flex items-start justify-between gap-4">
@@ -372,14 +372,14 @@ export default function AutomatizacionesPage() {
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => handleToggle(item)}
-                      className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      className="rounded-xl p-2 text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
                       title={item.activa ? "Desactivar" : "Activar"}
                     >
                       {item.activa ? <Power className="h-4 w-4" /> : <PowerOff className="h-4 w-4" />}
                     </button>
                     <button
                       onClick={() => handleDelete(item.id)}
-                      className="rounded-lg p-2 text-muted-foreground hover:bg-red-500/10 hover:text-red-400"
+                      className="rounded-xl p-2 text-muted-foreground hover:bg-red-500/10 hover:text-red-400 transition-colors"
                       title="Eliminar"
                     >
                       <Trash2 className="h-4 w-4" />

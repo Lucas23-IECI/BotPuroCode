@@ -103,9 +103,9 @@ export default function ExportPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="animate-fade-in space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Exportar Datos</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Exportar Datos</h1>
         <p className="text-sm text-muted-foreground">
           Descarga tus leads en CSV o JSON, con filtros y selección de columnas
         </p>
@@ -114,7 +114,7 @@ export default function ExportPage() {
       {/* Quick download row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <button onClick={handleCSVDownload}
-          className="flex items-center gap-3 rounded-xl border border-border bg-card p-5 text-left transition-colors hover:bg-muted/50">
+          className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-5 text-left transition-all hover:shadow-md hover:-translate-y-0.5">
           <div className="rounded-lg bg-green-500/10 p-2.5"><FileSpreadsheet className="h-5 w-5 text-green-400" /></div>
           <div className="flex-1">
             <p className="font-semibold text-foreground">CSV completo</p>
@@ -123,7 +123,7 @@ export default function ExportPage() {
           <Download className="h-5 w-5 text-muted-foreground" />
         </button>
         <button onClick={handleJSONDownload}
-          className="flex items-center gap-3 rounded-xl border border-border bg-card p-5 text-left transition-colors hover:bg-muted/50">
+          className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-5 text-left transition-all hover:shadow-md hover:-translate-y-0.5">
           <div className="rounded-lg bg-blue-500/10 p-2.5"><FileJson className="h-5 w-5 text-blue-400" /></div>
           <div className="flex-1">
             <p className="font-semibold text-foreground">JSON filtrado</p>
@@ -134,18 +134,18 @@ export default function ExportPage() {
       </div>
 
       {/* Filters */}
-      <div className="rounded-xl border border-border bg-card p-5">
+      <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
         <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Filtros de exportación</h3>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div>
             <label className="mb-1 block text-xs text-muted-foreground">Score mínimo</label>
             <input type="number" min={0} max={100} value={scoreMin} onChange={(e) => setScoreMin(Number(e.target.value))}
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" />
+              className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-all" />
           </div>
           <div>
             <label className="mb-1 block text-xs text-muted-foreground">Nivel</label>
             <select value={nivel} onChange={(e) => setNivel(e.target.value)}
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground">
+              className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-all">
               <option value="">Todos</option>
               <option value="ALTA">Alta</option>
               <option value="MEDIA_ALTA">Media Alta</option>
@@ -156,7 +156,7 @@ export default function ExportPage() {
           <div>
             <label className="mb-1 block text-xs text-muted-foreground">Presencia</label>
             <select value={presencia} onChange={(e) => setPresencia(e.target.value)}
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground">
+              className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-all">
               <option value="">Todas</option>
               <option value="SIN_WEB">Sin Web</option>
               <option value="SOLO_RRSS">Solo RRSS</option>
@@ -168,7 +168,7 @@ export default function ExportPage() {
           <div>
             <label className="mb-1 block text-xs text-muted-foreground">Estado CRM</label>
             <select value={estadoCRM} onChange={(e) => setEstadoCRM(e.target.value)}
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground">
+              className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-all">
               <option value="">Todos</option>
               <option value="NO_CONTACTADO">No Contactado</option>
               <option value="CONTACTADO">Contactado</option>
@@ -182,13 +182,13 @@ export default function ExportPage() {
       </div>
 
       {/* Column selector */}
-      <div className="rounded-xl border border-border bg-card p-5">
+      <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Columnas a exportar</h3>
           <div className="flex gap-2">
-            <button onClick={selectAll} className="text-xs text-primary hover:underline">Todas</button>
+            <button onClick={selectAll} className="text-xs text-violet-500 hover:underline">Todas</button>
             <span className="text-xs text-muted-foreground">·</span>
-            <button onClick={selectMinimal} className="text-xs text-primary hover:underline">Mínimas</button>
+            <button onClick={selectMinimal} className="text-xs text-violet-500 hover:underline">Mínimas</button>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -199,7 +199,7 @@ export default function ExportPage() {
               className={cn(
                 "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
                 selectedCols.has(col.key)
-                  ? "bg-primary/15 text-primary"
+                  ? "bg-violet-500/15 text-violet-500"
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
               )}
             >
@@ -213,7 +213,7 @@ export default function ExportPage() {
       {/* Preview */}
       <div className="flex items-center gap-3">
         <button onClick={loadPreview} disabled={loadingPreview}
-          className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow-md shadow-violet-500/20 hover:brightness-110 transition-all disabled:opacity-50">
           <Eye className="h-4 w-4" /> {loadingPreview ? "Cargando…" : "Previsualizar"}
         </button>
         {showPreview && (
@@ -223,7 +223,7 @@ export default function ExportPage() {
 
       {showPreview && preview.length > 0 && (
         <div className="space-y-3">
-          <div className="max-h-96 overflow-auto rounded-lg border border-border">
+          <div className="max-h-96 overflow-auto rounded-xl border border-border/60">
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-muted">
                 <tr>
@@ -246,7 +246,7 @@ export default function ExportPage() {
             </table>
           </div>
           <button onClick={handleClientCSVDownload}
-            className="flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-green-700">
+            className="flex items-center gap-2 rounded-xl bg-green-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-green-700 transition-colors">
             <Download className="h-4 w-4" /> Descargar preview como CSV
           </button>
         </div>

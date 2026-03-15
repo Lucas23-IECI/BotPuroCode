@@ -87,7 +87,7 @@ export default function EstadisticasPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-violet-900 dark:border-t-violet-400" />
       </div>
     );
   }
@@ -140,14 +140,14 @@ export default function EstadisticasPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="animate-fade-in space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Estadísticas</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Estadísticas</h1>
           <p className="text-sm text-muted-foreground">Resumen detallado de la base de leads</p>
         </div>
         {/* Period filter */}
-        <div className="flex gap-1 rounded-lg bg-muted/50 p-1">
+        <div className="flex gap-1 rounded-xl bg-muted/50 p-1">
           {([
             { key: "all" as Period, label: "Todo" },
             { key: "7d" as Period, label: "7 días" },
@@ -156,8 +156,8 @@ export default function EstadisticasPage() {
           ]).map((p) => (
             <button key={p.key} onClick={() => setPeriod(p.key)}
               className={cn(
-                "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                period === p.key ? "bg-card text-foreground shadow" : "text-muted-foreground hover:text-foreground"
+                "rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
+                period === p.key ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow" : "text-muted-foreground hover:text-foreground"
               )}>
               {p.label}
             </button>
@@ -166,16 +166,16 @@ export default function EstadisticasPage() {
       </div>
 
       {/* KPI Cards — 2 rows */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 stagger-children">
         {[
-          { label: "Total", value: stats.total, icon: BarChart3, bg: "bg-primary/10", text: "text-primary" },
+          { label: "Total", value: stats.total, icon: BarChart3, bg: "bg-violet-500/10", text: "text-violet-500" },
           { label: "Score Prom.", value: stats.avgScore.toFixed(1), icon: TrendingUp, bg: "bg-green-500/10", text: "text-green-400" },
           { label: "Oport. Alta", value: oportunidadAlta, icon: Target, bg: "bg-yellow-500/10", text: "text-yellow-400" },
           { label: "Sin Web", value: sinWeb, icon: PieChart, bg: "bg-blue-500/10", text: "text-blue-400" },
           { label: "Nuevos 7d", value: nuevos7d, icon: Calendar, bg: "bg-purple-500/10", text: "text-purple-400" },
           { label: "Nuevos 30d", value: nuevos30d, icon: Users, bg: "bg-indigo-500/10", text: "text-indigo-400" },
         ].map((kpi) => (
-          <div key={kpi.label} className="rounded-xl border border-border bg-card p-4">
+          <div key={kpi.label} className="rounded-2xl border border-border/60 bg-card p-4 transition-all hover:shadow-md hover:-translate-y-0.5">
             <div className="flex items-center gap-2.5">
               <div className={cn("rounded-lg p-2", kpi.bg)}>
                 <kpi.icon className={cn("h-4 w-4", kpi.text)} />
@@ -191,27 +191,27 @@ export default function EstadisticasPage() {
 
       {/* Conversion + Seguimientos */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-border bg-card p-5">
+        <div className="rounded-2xl border border-border/60 bg-card p-5 transition-shadow hover:shadow-md">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-green-500/10 p-2"><Award className="h-5 w-5 text-green-400" /></div>
             <div>
               <p className="text-sm text-muted-foreground">Tasa de conversión</p>
-              <p className="text-2xl font-bold text-foreground">{tasaConversion.toFixed(1)}%</p>
+              <p className="text-2xl font-bold tracking-tight text-foreground">{tasaConversion.toFixed(1)}%</p>
               <p className="text-xs text-muted-foreground">{ganados} ganados</p>
             </div>
           </div>
         </div>
-        <div className="rounded-xl border border-border bg-card p-5">
+        <div className="rounded-2xl border border-border/60 bg-card p-5 transition-shadow hover:shadow-md">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-yellow-500/10 p-2"><Clock className="h-5 w-5 text-yellow-400" /></div>
             <div>
               <p className="text-sm text-muted-foreground">Seguimientos pendientes</p>
-              <p className="text-2xl font-bold text-foreground">{seguimientosPendientes}</p>
+              <p className="text-2xl font-bold tracking-tight text-foreground">{seguimientosPendientes}</p>
             </div>
           </div>
         </div>
         {/* Mini donut presencia */}
-        <div className="rounded-xl border border-border bg-card p-5">
+        <div className="rounded-2xl border border-border/60 bg-card p-5 transition-shadow hover:shadow-md">
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Presencia</h3>
           <DonutRing segments={porPresencia.map((p) => ({
             label: p.estadoPresencia.replace(/_/g, " "),
@@ -224,7 +224,7 @@ export default function EstadisticasPage() {
       {/* Charts grid */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Nivel donut + bars */}
-        <div className="rounded-xl border border-border bg-card p-5">
+        <div className="rounded-2xl border border-border/60 bg-card p-5 transition-shadow hover:shadow-md">
           <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             Nivel de Oportunidad
           </h3>
@@ -238,7 +238,7 @@ export default function EstadisticasPage() {
         </div>
 
         {/* Presencia bars */}
-        <div className="rounded-xl border border-border bg-card p-5">
+        <div className="rounded-2xl border border-border/60 bg-card p-5 transition-shadow hover:shadow-md">
           <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             Presencia Digital
           </h3>
@@ -252,17 +252,17 @@ export default function EstadisticasPage() {
         </div>
 
         {/* Rubros */}
-        <div className="rounded-xl border border-border bg-card p-5">
+        <div className="rounded-2xl border border-border/60 bg-card p-5 transition-shadow hover:shadow-md">
           <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Top Rubros</h3>
           <div className="space-y-3">
             {porRubro.slice(0, 12).map((r) => (
-              <Bar key={r.rubro} label={r.rubro} value={r._count} max={maxRubro} color="bg-primary" />
+              <Bar key={r.rubro} label={r.rubro} value={r._count} max={maxRubro} color="bg-violet-500" />
             ))}
           </div>
         </div>
 
         {/* Comunas */}
-        <div className="rounded-xl border border-border bg-card p-5">
+        <div className="rounded-2xl border border-border/60 bg-card p-5 transition-shadow hover:shadow-md">
           <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Top Comunas</h3>
           <div className="space-y-3">
             {porComuna.slice(0, 12).map((c) => (
@@ -272,7 +272,7 @@ export default function EstadisticasPage() {
         </div>
 
         {/* Estado CRM */}
-        <div className="rounded-xl border border-border bg-card p-5 lg:col-span-2">
+        <div className="rounded-2xl border border-border/60 bg-card p-5 lg:col-span-2 transition-shadow hover:shadow-md">
           <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Estado CRM</h3>
           <div className="space-y-3">
             {porEstadoContacto.map((e) => (
@@ -285,7 +285,7 @@ export default function EstadisticasPage() {
 
       {/* Conversion Heatmap by Zone */}
       {convComuna.length > 0 && (
-        <div className="rounded-xl border border-border bg-card p-5">
+        <div className="rounded-2xl border border-border/60 bg-card p-5 transition-shadow hover:shadow-md">
           <div className="mb-4 flex items-center gap-3">
             <div className="rounded-lg bg-emerald-500/10 p-2"><MapPin className="h-5 w-5 text-emerald-400" /></div>
             <div>
@@ -296,7 +296,7 @@ export default function EstadisticasPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
+                <tr className="border-b border-border/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
                   <th className="pb-2 pr-4">Comuna</th>
                   <th className="pb-2 pr-4 text-center">Total</th>
                   <th className="pb-2 pr-4 text-center">Ganados</th>
@@ -304,9 +304,9 @@ export default function EstadisticasPage() {
                   <th className="pb-2">Conversión</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border/50">
+              <tbody className="divide-y divide-border/40">
                 {convComuna.map((c) => (
-                  <tr key={c.comuna} className="group hover:bg-muted/30">
+                  <tr key={c.comuna} className="group hover:bg-accent/50">
                     <td className="py-2 pr-4 font-medium text-foreground">{c.comuna}</td>
                     <td className="py-2 pr-4 text-center text-muted-foreground">{c.total}</td>
                     <td className="py-2 pr-4 text-center text-muted-foreground">{c.ganados}</td>

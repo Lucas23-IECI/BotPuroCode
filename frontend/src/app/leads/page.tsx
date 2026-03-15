@@ -203,27 +203,27 @@ export default function LeadsPage() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Leads</h1>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Leads</h1>
           <p className="text-sm text-muted-foreground">
             {data?.pagination.total ?? 0} negocios encontrados
           </p>
         </div>
         {selected.size > 0 && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 animate-scale-in">
             <button
               onClick={handleBatchAnalysis}
-              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-4 py-2 text-sm font-medium text-white shadow-md shadow-violet-500/20 hover:shadow-lg transition-all"
             >
               <PlayCircle className="h-4 w-4" />
               Analizar {selected.size}
             </button>
             <button
               onClick={handleBatchDelete}
-              className="flex items-center gap-2 rounded-lg border border-destructive/50 px-4 py-2 text-sm font-medium text-destructive hover:bg-destructive/10"
+              className="flex items-center gap-2 rounded-xl border border-destructive/50 px-4 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
             >
               <Trash2 className="h-4 w-4" />
               Eliminar {selected.size}
@@ -241,14 +241,14 @@ export default function LeadsPage() {
             placeholder="Buscar por nombre..."
             value={filters.busqueda}
             onChange={(e) => setFilters((f) => ({ ...f, busqueda: e.target.value, page: 1 }))}
-            className="rounded-lg border border-input bg-card py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="rounded-xl border border-input bg-card py-2.5 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground/60 transition-all"
           />
         </div>
 
         <select
           value={filters.rubro}
           onChange={(e) => setFilters((f) => ({ ...f, rubro: e.target.value, page: 1 }))}
-          className="rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground"
+          className="rounded-xl border border-input bg-card px-3 py-2.5 text-sm text-foreground transition-all"
         >
           <option value="">Todos los rubros</option>
           {RUBROS.filter(Boolean).map((r) => (
@@ -259,7 +259,7 @@ export default function LeadsPage() {
         <select
           value={filters.comuna}
           onChange={(e) => setFilters((f) => ({ ...f, comuna: e.target.value, page: 1 }))}
-          className="rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground"
+          className="rounded-xl border border-input bg-card px-3 py-2.5 text-sm text-foreground transition-all"
         >
           <option value="">Todas las comunas</option>
           {COMUNAS.filter(Boolean).map((c) => (
@@ -270,7 +270,7 @@ export default function LeadsPage() {
         <select
           value={filters.estadoPresencia}
           onChange={(e) => setFilters((f) => ({ ...f, estadoPresencia: e.target.value, page: 1 }))}
-          className="rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground"
+          className="rounded-xl border border-input bg-card px-3 py-2.5 text-sm text-foreground transition-all"
         >
           <option value="">Toda presencia</option>
           {ESTADOS_PRESENCIA.filter(Boolean).map((e) => (
@@ -281,7 +281,7 @@ export default function LeadsPage() {
         <select
           value={filters.nivelOportunidad}
           onChange={(e) => setFilters((f) => ({ ...f, nivelOportunidad: e.target.value, page: 1 }))}
-          className="rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground"
+          className="rounded-xl border border-input bg-card px-3 py-2.5 text-sm text-foreground transition-all"
         >
           <option value="">Todo nivel</option>
           {NIVELES.filter(Boolean).map((n) => (
@@ -300,9 +300,9 @@ export default function LeadsPage() {
             }));
           }}
           className={cn(
-            "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+            "rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
             filters.asignadoAId
-              ? "bg-primary text-primary-foreground"
+              ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow-sm"
               : "border border-input bg-card text-muted-foreground hover:bg-muted"
           )}
         >
@@ -311,9 +311,9 @@ export default function LeadsPage() {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-border">
+      <div className="overflow-x-auto rounded-2xl border border-border/60 bg-card">
         <table className="w-full text-sm">
-          <thead className="border-b border-border bg-muted/50">
+          <thead className="border-b border-border/60 bg-muted/30">
             <tr>
               <th className="px-3 py-3 text-left">
                 <input
@@ -344,7 +344,7 @@ export default function LeadsPage() {
             {loading ? (
               <tr>
                 <td colSpan={8} className="py-12 text-center text-muted-foreground">
-                  <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-muted border-t-primary" />
+                  <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-violet-800 dark:border-t-violet-400" />
                 </td>
               </tr>
             ) : data?.data.length === 0 ? (
@@ -358,9 +358,9 @@ export default function LeadsPage() {
                 <tr
                   key={n.id}
                   className={cn(
-                    "group border-b border-border border-l-4 transition-colors hover:bg-muted/30",
+                    "group border-b border-border/40 border-l-4 transition-colors hover:bg-accent/50",
                     scoreBorder(n.score),
-                    idx % 2 === 1 && "bg-muted/10"
+                    idx % 2 === 1 && "bg-muted/5"
                   )}
                 >
                   <td className="px-3 py-3">
@@ -373,7 +373,7 @@ export default function LeadsPage() {
                   </td>
                   <td className="px-3 py-3">
                     <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500/20 to-blue-500/20 text-xs font-bold text-violet-600 dark:text-violet-400">
                         {initials(n.nombre)}
                       </div>
                       <div>
@@ -461,14 +461,14 @@ export default function LeadsPage() {
             <button
               disabled={data.pagination.page <= 1}
               onClick={() => setFilters((f) => ({ ...f, page: f.page - 1 }))}
-              className="rounded-lg border border-input bg-card p-2 text-muted-foreground hover:text-foreground disabled:opacity-40"
+              className="rounded-xl border border-input bg-card p-2 text-muted-foreground hover:text-foreground hover:bg-accent disabled:opacity-40 transition-colors"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
             <button
               disabled={data.pagination.page >= data.pagination.totalPages}
               onClick={() => setFilters((f) => ({ ...f, page: f.page + 1 }))}
-              className="rounded-lg border border-input bg-card p-2 text-muted-foreground hover:text-foreground disabled:opacity-40"
+              className="rounded-xl border border-input bg-card p-2 text-muted-foreground hover:text-foreground hover:bg-accent disabled:opacity-40 transition-colors"
             >
               <ChevronRight className="h-4 w-4" />
             </button>

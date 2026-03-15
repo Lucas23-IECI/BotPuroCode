@@ -86,17 +86,17 @@ export default function NotificacionesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-violet-900 dark:border-t-violet-400" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="animate-fade-in space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Notificaciones</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Notificaciones</h1>
           <p className="text-sm text-muted-foreground">
             {noLeidas > 0 ? `${noLeidas} sin leer` : "Todas leídas"}
           </p>
@@ -104,7 +104,7 @@ export default function NotificacionesPage() {
         {noLeidas > 0 && (
           <button
             onClick={handleMarkAllRead}
-            className="flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
+            className="flex items-center gap-2 rounded-xl border border-border/60 px-4 py-2 text-sm font-medium text-foreground hover:bg-accent/50 transition-colors"
           >
             <CheckCheck className="h-4 w-4" /> Marcar todas leídas
           </button>
@@ -116,8 +116,8 @@ export default function NotificacionesPage() {
         <button
           onClick={() => setFilter("all")}
           className={cn(
-            "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-            filter === "all" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+            "rounded-xl px-3 py-1.5 text-xs font-medium transition-all",
+            filter === "all" ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow" : "bg-muted text-muted-foreground hover:bg-muted/80"
           )}
         >
           Todas ({notificaciones.length})
@@ -125,8 +125,8 @@ export default function NotificacionesPage() {
         <button
           onClick={() => setFilter("unread")}
           className={cn(
-            "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-            filter === "unread" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+            "rounded-xl px-3 py-1.5 text-xs font-medium transition-all",
+            filter === "unread" ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow" : "bg-muted text-muted-foreground hover:bg-muted/80"
           )}
         >
           Sin leer ({noLeidas})
@@ -135,8 +135,8 @@ export default function NotificacionesPage() {
 
       {/* List */}
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-12 text-center">
-          <Bell className="mx-auto h-12 w-12 text-muted-foreground/50" />
+        <div className="rounded-2xl border border-dashed border-border/60 p-12 text-center">
+          <Bell className="mx-auto h-12 w-12 text-violet-400/50" />
           <p className="mt-3 text-sm text-muted-foreground">No hay notificaciones</p>
         </div>
       ) : (
@@ -147,19 +147,19 @@ export default function NotificacionesPage() {
               <div
                 key={n.id}
                 className={cn(
-                  "flex items-start gap-3 rounded-xl border p-4 transition-colors",
+                  "flex items-start gap-3 rounded-2xl border p-4 transition-all hover:shadow-sm",
                   n.leida
-                    ? "border-border bg-card"
-                    : "border-primary/30 bg-primary/5"
+                    ? "border-border/60 bg-card"
+                    : "border-violet-500/30 bg-violet-500/5"
                 )}
               >
                 <div className={cn("mt-0.5 shrink-0", cfg.color)}>{cfg.icon}</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className={cn("text-sm font-medium", n.leida ? "text-foreground" : "text-primary")}>
+                    <span className={cn("text-sm font-medium", n.leida ? "text-foreground" : "text-violet-500")}>
                       {n.titulo}
                     </span>
-                    {!n.leida && <div className="h-2 w-2 rounded-full bg-primary shrink-0" />}
+                    {!n.leida && <div className="h-2 w-2 rounded-full bg-violet-500 shrink-0" />}
                   </div>
                   <p className="mt-0.5 text-sm text-muted-foreground">{n.mensaje}</p>
                   <span className="text-xs text-muted-foreground">{timeAgo(n.createdAt)}</span>
@@ -168,7 +168,7 @@ export default function NotificacionesPage() {
                   {!n.leida && (
                     <button
                       onClick={() => handleMarkRead(n.id)}
-                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      className="rounded-xl p-1.5 text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
                       title="Marcar como leída"
                     >
                       <Eye className="h-4 w-4" />
@@ -176,7 +176,7 @@ export default function NotificacionesPage() {
                   )}
                   <button
                     onClick={() => handleDelete(n.id)}
-                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-500/10 hover:text-red-400"
+                    className="rounded-xl p-1.5 text-muted-foreground hover:bg-red-500/10 hover:text-red-400 transition-colors"
                     title="Eliminar"
                   >
                     <Trash2 className="h-4 w-4" />

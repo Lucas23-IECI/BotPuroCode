@@ -36,16 +36,18 @@ function KPICard({
   iconBg?: string;
 }) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-5 transition-shadow hover:shadow-lg">
-      <div className="flex items-start justify-between">
+    <div className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card p-5 transition-all duration-200 hover:shadow-lg hover:shadow-black/5 hover:-translate-y-0.5">
+      {/* Subtle gradient shine on hover */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/0 to-white/0 group-hover:from-violet-500/[0.02] group-hover:via-transparent group-hover:to-blue-500/[0.02] transition-all" />
+      <div className="relative flex items-start justify-between">
         <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             {label}
           </p>
-          <p className={`text-3xl font-bold ${accent}`}>{value}</p>
+          <p className={`text-3xl font-bold tracking-tight ${accent}`}>{value}</p>
           {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
         </div>
-        <div className={`rounded-xl p-2.5 ${iconBg}`}>
+        <div className={`rounded-xl p-2.5 ${iconBg} ring-1 ring-black/[0.03]`}>
           <Icon className={`h-5 w-5 ${accent}`} />
         </div>
       </div>
@@ -234,7 +236,7 @@ export default function DashboardPage() {
   if (!stats) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600 dark:border-violet-800 dark:border-t-violet-400" />
       </div>
     );
   }
@@ -254,25 +256,25 @@ export default function DashboardPage() {
   const seguimientosPendientes = stats.seguimientosPendientes ?? 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-end justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Dashboard</h1>
           <p className="text-sm text-muted-foreground">
             {stats.total} negocios registrados
           </p>
         </div>
         {(queue.size > 0 || queue.pending > 0) && (
-          <div className="flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-xs text-blue-400">
-            <div className="h-2 w-2 animate-pulse rounded-full bg-blue-400" />
+          <div className="flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/10 px-4 py-1.5 text-xs text-violet-500">
+            <div className="h-2 w-2 animate-pulse rounded-full bg-violet-500" />
             {queue.size} en cola &middot; {queue.pending} procesando
           </div>
         )}
       </div>
 
       {/* KPI Grid */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 stagger-children">
         <KPICard
           label="Total Negocios"
           value={stats.total}
@@ -307,7 +309,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Secondary KPIs */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 stagger-children">
         <KPICard
           label="Nuevos (30d)"
           value={nuevos30d}
@@ -342,8 +344,8 @@ export default function DashboardPage() {
       {/* Score Ring + Funnel */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Score Overview */}
-        <div className="rounded-2xl border border-border bg-card p-5">
-          <h3 className="mb-4 text-sm font-medium text-foreground">Score General</h3>
+        <div className="rounded-2xl border border-border/60 bg-card p-5 transition-shadow hover:shadow-md">
+          <h3 className="mb-4 text-sm font-semibold text-foreground">Score General</h3>
           <div className="flex flex-col items-center gap-3">
             <ScoreRing score={stats.avgScore} />
             <p className="text-xs text-muted-foreground">promedio global</p>
@@ -362,8 +364,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Funnel */}
-        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-2">
-          <h3 className="mb-4 text-sm font-medium text-foreground">Embudo de Ventas</h3>
+        <div className="rounded-2xl border border-border/60 bg-card p-5 lg:col-span-2 transition-shadow hover:shadow-md">
+          <h3 className="mb-4 text-sm font-semibold text-foreground">Embudo de Ventas</h3>
           <SalesFunnel data={stats.byContacto} />
         </div>
       </div>
@@ -371,8 +373,8 @@ export default function DashboardPage() {
       {/* Presencia + Top Rubros + Comunas */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Presencia Distribution */}
-        <div className="rounded-2xl border border-border bg-card p-5">
-          <h3 className="mb-4 text-sm font-medium text-foreground">Presencia Digital</h3>
+        <div className="rounded-2xl border border-border/60 bg-card p-5 transition-shadow hover:shadow-md">
+          <h3 className="mb-4 text-sm font-semibold text-foreground">Presencia Digital</h3>
           <HorizontalBarChart
             items={Object.entries(stats.byPresencia)
               .filter(([, v]) => v > 0)
@@ -385,8 +387,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Top Rubros */}
-        <div className="rounded-2xl border border-border bg-card p-5">
-          <h3 className="mb-4 text-sm font-medium text-foreground">Top Rubros</h3>
+        <div className="rounded-2xl border border-border/60 bg-card p-5 transition-shadow hover:shadow-md">
+          <h3 className="mb-4 text-sm font-semibold text-foreground">Top Rubros</h3>
           <HorizontalBarChart
             items={stats.byRubro.slice(0, 8).map((r) => ({ label: r.rubro, value: r.count }))}
             colorFn={() => "bg-blue-500"}
@@ -397,8 +399,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Top Comunas */}
-        <div className="rounded-2xl border border-border bg-card p-5">
-          <h3 className="mb-4 text-sm font-medium text-foreground">Por Comuna</h3>
+        <div className="rounded-2xl border border-border/60 bg-card p-5 transition-shadow hover:shadow-md">
+          <h3 className="mb-4 text-sm font-semibold text-foreground">Por Comuna</h3>
           <HorizontalBarChart
             items={stats.byComuna.slice(0, 8).map((c) => ({ label: c.comuna, value: c.count }))}
             colorFn={() => "bg-violet-500"}
@@ -411,9 +413,9 @@ export default function DashboardPage() {
 
       {/* Top Hot Leads */}
       {topHot.length > 0 && (
-        <div className="rounded-2xl border border-border bg-card p-5">
+        <div className="rounded-2xl border border-border/60 bg-card p-5 transition-shadow hover:shadow-md">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <Flame className="h-4 w-4 text-orange-500" />
               Top Leads Calientes
             </h3>
@@ -429,7 +431,7 @@ export default function DashboardPage() {
               <Link
                 key={lead.id}
                 href={`/leads/${lead.id}`}
-                className="group flex items-center gap-3 rounded-xl border border-border p-3 transition-colors hover:border-orange-500/30 hover:bg-orange-500/5"
+                className="group flex items-center gap-3 rounded-xl border border-border/60 p-3 transition-all hover:border-orange-500/30 hover:bg-orange-500/5 hover:shadow-sm"
               >
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 text-xs font-bold text-white">
                   {lead.score}

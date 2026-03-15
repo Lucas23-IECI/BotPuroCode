@@ -112,9 +112,9 @@ export default function BuscarOSMPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="animate-fade-in space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Buscar en OpenStreetMap</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Buscar en OpenStreetMap</h1>
         <p className="text-sm text-muted-foreground">
           Descubre negocios en el Gran Concepcion usando datos abiertos de OSM
         </p>
@@ -124,7 +124,7 @@ export default function BuscarOSMPage() {
         {/* Left Panel — Controls */}
         <div className="w-full shrink-0 space-y-4 lg:w-80">
           {/* Rubros */}
-          <div className="rounded-2xl border border-border bg-card">
+          <div className="rounded-2xl border border-border/60 bg-card">
             <button
               onClick={() => setShowRubros((v) => !v)}
               className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-foreground"
@@ -132,7 +132,7 @@ export default function BuscarOSMPage() {
               <span>
                 Rubros{" "}
                 {selectedRubros.size > 0 && (
-                  <span className="ml-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                  <span className="ml-1 rounded-full bg-violet-500/10 px-2 py-0.5 text-xs text-violet-500">
                     {selectedRubros.size}
                   </span>
                 )}
@@ -140,7 +140,7 @@ export default function BuscarOSMPage() {
               {showRubros ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
             </button>
             {showRubros && (
-              <div className="max-h-44 overflow-y-auto border-t border-border px-2 py-2">
+              <div className="max-h-44 overflow-y-auto border-t border-border/60 px-2 py-2">
                 {rubros.map((r) => (
                   <label
                     key={r}
@@ -160,7 +160,7 @@ export default function BuscarOSMPage() {
           </div>
 
           {/* Comunas */}
-          <div className="rounded-2xl border border-border bg-card">
+          <div className="rounded-2xl border border-border/60 bg-card">
             <button
               onClick={() => setShowZonas((v) => !v)}
               className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-foreground"
@@ -168,7 +168,7 @@ export default function BuscarOSMPage() {
               <span>
                 Comunas{" "}
                 {selectedZonas.size > 0 && (
-                  <span className="ml-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                  <span className="ml-1 rounded-full bg-violet-500/10 px-2 py-0.5 text-xs text-violet-500">
                     {selectedZonas.size}
                   </span>
                 )}
@@ -176,7 +176,7 @@ export default function BuscarOSMPage() {
               {showZonas ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
             </button>
             {showZonas && (
-              <div className="max-h-44 overflow-y-auto border-t border-border px-2 py-2">
+              <div className="max-h-44 overflow-y-auto border-t border-border/60 px-2 py-2">
                 {zonas.map((z) => (
                   <label
                     key={z}
@@ -196,7 +196,7 @@ export default function BuscarOSMPage() {
           </div>
 
           {/* Options + Search Button */}
-          <div className="rounded-2xl border border-border bg-card p-4">
+          <div className="rounded-2xl border border-border/60 bg-card p-4">
             <label className="flex items-center gap-2 text-sm text-foreground">
               <input
                 type="checkbox"
@@ -210,7 +210,7 @@ export default function BuscarOSMPage() {
             <button
               onClick={handleSearch}
               disabled={searching}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-6 py-2.5 text-sm font-medium text-white shadow-md shadow-violet-500/20 hover:brightness-110 transition-all disabled:opacity-50"
             >
               {searching ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -231,7 +231,7 @@ export default function BuscarOSMPage() {
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-muted/50">
                   <div
-                    className="h-full rounded-full bg-primary transition-all"
+                    className="h-full rounded-full bg-gradient-to-r from-violet-600 to-blue-600 transition-all"
                     style={{
                       width: `${(progress.current / progress.total) * 100}%`,
                     }}
@@ -245,15 +245,15 @@ export default function BuscarOSMPage() {
         {/* Right Panel — Results */}
         <div className="min-w-0 flex-1">
           {results.length === 0 && !searching && (
-            <div className="flex h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-border text-muted-foreground">
-              <Search className="mb-2 h-8 w-8" />
+            <div className="flex h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 text-muted-foreground">
+              <Search className="mb-2 h-8 w-8 text-violet-400/50" />
               <p className="text-sm">Selecciona rubros y comunas para buscar</p>
             </div>
           )}
 
           {results.length === 0 && searching && (
-            <div className="flex h-64 flex-col items-center justify-center rounded-2xl border border-border">
-              <Loader2 className="mb-2 h-8 w-8 animate-spin text-primary" />
+            <div className="flex h-64 flex-col items-center justify-center rounded-2xl border border-border/60">
+              <Loader2 className="mb-2 h-8 w-8 animate-spin text-violet-500" />
               <p className="text-sm text-muted-foreground">Buscando negocios...</p>
             </div>
           )}
@@ -294,10 +294,10 @@ export default function BuscarOSMPage() {
                   <button
                     key={i}
                     onClick={() => setSelectedResult(n)}
-                    className={`group rounded-2xl border p-4 text-left transition-all hover:shadow-md ${
+                    className={`group rounded-2xl border p-4 text-left transition-all hover:shadow-md hover:-translate-y-0.5 ${
                       selectedResult === n
-                        ? "border-primary bg-primary/5"
-                        : "border-border bg-card hover:border-primary/30"
+                        ? "border-violet-500/50 bg-violet-500/5"
+                        : "border-border/60 bg-card hover:border-violet-500/30"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -352,7 +352,7 @@ export default function BuscarOSMPage() {
 
         {/* Preview Panel — shows when result selected on large screens */}
         {selectedResult && (
-          <div className="hidden w-72 shrink-0 rounded-2xl border border-border bg-card p-5 xl:block">
+          <div className="hidden w-72 shrink-0 rounded-2xl border border-border/60 bg-card p-5 xl:block">
             <h3 className="text-sm font-bold text-foreground">{selectedResult.nombre}</h3>
             <p className="mt-1 text-xs text-muted-foreground">
               {selectedResult.tipo} &middot; {selectedResult.comuna}
